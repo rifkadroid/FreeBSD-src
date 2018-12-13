@@ -1,6 +1,6 @@
 \ Copyright (c) 2006-2015 Devin Teske <dteske@FreeBSD.org>
 \ All rights reserved.
-\ 
+\
 \ Redistribution and use in source and binary forms, with or without
 \ modification, are permitted provided that the following conditions
 \ are met:
@@ -9,7 +9,7 @@
 \ 2. Redistributions in binary form must reproduce the above copyright
 \    notice, this list of conditions and the following disclaimer in the
 \    documentation and/or other materials provided with the distribution.
-\ 
+\
 \ THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 \ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 \ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -21,7 +21,7 @@
 \ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 \ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 \ SUCH DAMAGE.
-\ 
+\
 \ $FreeBSD$
 
 marker task-menu-commands.4th
@@ -37,9 +37,9 @@ variable root_state
 
 also menu-namespace also menu-command-helpers
 
-\ 
+\
 \ Boot
-\ 
+\
 
 : init_boot ( N -- N )
 	dup
@@ -54,9 +54,9 @@ also menu-namespace also menu-command-helpers
 	evaluate
 ;
 
-\ 
+\
 \ Alternate Boot
-\ 
+\
 
 : init_altboot ( N -- N )
 	dup
@@ -82,9 +82,9 @@ also menu-namespace also menu-command-helpers
 	0 boot ( state -- )
 ;
 
-\ 
+\
 \ ACPI
-\ 
+\
 
 : acpi_enable ( -- )
 	s" set acpi_load=YES" evaluate \ XXX deprecated but harmless
@@ -113,9 +113,9 @@ also menu-namespace also menu-command-helpers
 	TRUE \ loop menu again
 ;
 
-\ 
+\
 \ Safe Mode
-\ 
+\
 
 : safemode_enabled? ( -- flag )
 	s" kern.smp.disabled" getenv -1 <> dup if
@@ -165,9 +165,9 @@ also menu-namespace also menu-command-helpers
 	TRUE \ loop menu again
 ;
 
-\ 
+\
 \ Single User Mode
-\ 
+\
 
 : singleuser_enabled? ( -- flag )
 	s" boot_single" getenv -1 <> dup if
@@ -204,9 +204,9 @@ also menu-namespace also menu-command-helpers
 	TRUE \ loop menu again
 ;
 
-\ 
+\
 \ Verbose Boot
-\ 
+\
 
 : verbose_enabled? ( -- flag )
 	s" boot_verbose" getenv -1 <> dup if
@@ -243,9 +243,9 @@ also menu-namespace also menu-command-helpers
 	TRUE \ loop menu again
 ;
 
-\ 
+\
 \ Escape to Prompt
-\ 
+\
 
 : goto_prompt ( N -- N FALSE )
 
@@ -253,15 +253,15 @@ also menu-namespace also menu-command-helpers
 
 	cr
 	." To get back to the menu, type `menu' and press ENTER" cr
-	." or type `boot' and press ENTER to start pfSense." cr
+	." or type `boot' and press ENTER to start Kontrol." cr
 	cr
 
 	FALSE \ exit the menu
 ;
 
-\ 
+\
 \ Cyclestate (used by kernel/root below)
-\ 
+\
 
 : init_cyclestate ( N K -- N )
 	over cycle_stateN ( n k -- n k addr )
@@ -278,7 +278,7 @@ also menu-namespace also menu-command-helpers
 
 \
 \ Kernel
-\ 
+\
 
 : init_kernel ( N -- N )
 	kernel_state @  ( n -- n k )
@@ -302,9 +302,9 @@ also menu-namespace also menu-command-helpers
 	TRUE		\ loop menu again
 ;
 
-\ 
+\
 \ Root
-\ 
+\
 
 : init_root ( N -- N )
 	root_state @    ( n -- n k )
@@ -328,9 +328,9 @@ also menu-namespace also menu-command-helpers
 	TRUE		\ loop menu again
 ;
 
-\ 
+\
 \ Menusets
-\ 
+\
 
 : goto_menu ( N M -- N TRUE )
 	menu-unset
@@ -339,9 +339,9 @@ also menu-namespace also menu-command-helpers
 	TRUE \ Loop menu again
 ;
 
-\ 
+\
 \ Defaults
-\ 
+\
 
 : set_default_boot_options ( N -- N TRUE )
 	acpi_enable
@@ -351,9 +351,9 @@ also menu-namespace also menu-command-helpers
 	2 goto_menu
 ;
 
-\ 
+\
 \ Set boot environment defaults
-\ 
+\
 
 : init_bootenv ( -- )
 	s" set menu_caption[1]=${bemenu_current}${vfs.root.mountfrom}" evaluate
@@ -366,7 +366,7 @@ also menu-namespace also menu-command-helpers
 
 \
 \ Redraw the entire screen. A long BE name can corrupt the menu
-\ 
+\
 
 : be_draw_screen
 	clear		\ Clear the screen (in screen.4th)
@@ -378,7 +378,7 @@ also menu-namespace also menu-command-helpers
 
 \
 \ Select a boot environment
-\ 
+\
 
 : set_bootenv ( N -- N TRUE )
 	dup s" set vfs.root.mountfrom=${bootenv_root[E]}" 38 +c! evaluate

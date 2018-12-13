@@ -1,6 +1,4 @@
-\ Copyright (c) 2004-2015 Electric Sheep Fencing LLC
-\ All rights reserved.
-\ 
+\
 \ Redistribution and use in source and binary forms, with or without
 \ modification, are permitted provided that the following conditions
 \ are met:
@@ -9,7 +7,7 @@
 \ 2. Redistributions in binary form must reproduce the above copyright
 \    notice, this list of conditions and the following disclaimer in the
 \    documentation and/or other materials provided with the distribution.
-\ 
+\
 \ THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 \ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 \ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -21,7 +19,7 @@
 \ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 \ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 \ SUCH DAMAGE.
-\ 
+\
 \ $FreeBSD$
 
 2 brandX ! 1 brandY ! \ Initialize brand placement defaults
@@ -32,15 +30,15 @@
 	1+ \ increase y for next time we're called
 ;
 
-: brand ( x y -- ) \ "pfSense" [wide] logo in B/W (7 rows x 42 columns)
+: brand ( x y -- ) \ "kontrol" [wide] logo in B/W (7 rows x 42 columns)
 
-	s"          __                               " brand+
-	s"   _ __  / _|___  ___ _ __  ___  ___       " brand+
-	s"  | '_ \| |_/ __|/ _ \ '_ \/ __|/ _ \      " brand+
-	s"  | |_) |  _\__ \  __/ | | \__ \  __/      " brand+
-	s"  | .__/|_| |___/\___|_| |_|___/\___|      " brand+
-	s"  |_|                                      " brand+
-	s"                                           " brand+
+	s"      _  __           _             _     " brand+
+ 	s"     | |/ /          | |           | |    " brand+
+ 	s"     | ' / ___  _ __ | |_ _ __ ___ | |    " brand+
+ 	s"     |  < / _ \| '_ \| __| '__/ _ \| |    " brand+
+ 	s"     | . | (_) | | | | |_| | | (_) | |    " brand+
+	s"     |_|\_\___/|_| |_|\__|_|  \___/|_|    " brand+
+        s"                                          " brand+
 
 	2drop
 ;
