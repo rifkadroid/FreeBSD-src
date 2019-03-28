@@ -1,6 +1,5 @@
 #	$FreeBSD$
 #
-# Copyright (c) 2018		Conrad Meyer <cem@FreeBSD.org>
 # Copyright (c) 2002, 2003	Sam Leffler, Errno Consulting
 # All rights reserved.
 #
@@ -26,26 +25,40 @@
 # SUCH DAMAGE.
 #
 
-PROGS=	cryptocheck cryptotest cryptokeytest cryptostats \
+ALL=	cryptotest cryptokeytest cryptostats \
 	ubsecstats hifnstats ipsecstats safestats
-MAN=
-BINDIR?=	/usr/local/bin
+BINDIR=	/usr/local/bin
 
-# cryptocheck: test symmetric crypto functions
-# Use openssl from ports for Blake2 algorithms
-CFLAGS.cryptocheck.c+=	$$(pkg-config --cflags openssl)
-LDFLAGS.cryptocheck+=	$$(pkg-config --libs openssl)
-LIBADD.cryptocheck+=	util
+all:	${ALL}
 
-# cryptokeytest: test asymmetric crypto functions
-LIBADD.cryptokeytest+=	crypto
+# program to test asymmetric crypto functions
+cryptokeytest: cryptokeytest.c
+	${CC} -o cryptokeytest cryptokeytest.c -lcrypto
 
-# cryptostats: dump statistics kept by the core crypto code
-# ubsecstats: print statistics kept by the Broadcom driver
-# hifnstats: print statistics kept by the HIFN driver
-# safestats: statistics kept by the SafeNet driver
-# ipsecstats: print statistics kept by fast ipsec
+# program to dump statistics kept by the core crypto code
+cryptostats: cryptostats.c
+	${CC} -o cryptostats cryptostats.c
 
-CLEANFILES+=	core a.out
+# program to print statistics kept by the Broadcom driver
+ubsecstats: ubsecstats.c
+	${CC} -o ubsecstats ubsecstats.c
 
-.include <bsd.progs.mk>
+# program to print statistics kept by the HIFN driver
+hifnstats: hifnstats.c
+	${CC} -o hifnstats hifnstats.c
+
+# program to print statistics kept by the SafeNet driver
+safestats: safestats.c
+	${CC} -o safestats safestats.c
+
+# program to print statistics kept by fast ipsec
+ipsecstats: ipsecstats.c
+	${CC} -o ipsecstats ipsecstats.c
+
+clean:
+	rm -f ${ALL} core a.out
+
+install: ${ALL}
+	for i in ${ALL}; do \
+		install $$i ${DESTDIR}${BINDIR}; \
+	done
