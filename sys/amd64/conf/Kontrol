@@ -120,11 +120,11 @@ options		DEVICE_POLLING
 options		MROUTING
 
 # Additional cards
-device		mxge		# mxge - Myricom Myri10GE 10 Gigabit Ethernet adapter driver
-device		cxgb		# cxgb -- Chelsio T3 10 Gigabit Ethernet adapter driver
-device		cxgbe		# cxgbe -- Chelsio T5 10 Gigabit Ethernet adapter driver
+#device		mxge		# mxge - Myricom Myri10GE 10 Gigabit Ethernet adapter driver
+#device		cxgb		# cxgb -- Chelsio T3 10 Gigabit Ethernet adapter driver
+#device		cxgbe		# cxgbe -- Chelsio T5 10 Gigabit Ethernet adapter driver
 #device		nve		# nVidia nForce MCP on-board Ethernet Networking
-device		oce
+#device		oce
 
 # Default serial speed
 options		CONSPEED=115200
