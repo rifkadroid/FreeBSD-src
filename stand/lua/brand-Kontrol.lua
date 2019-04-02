@@ -29,7 +29,7 @@
 
 local drawer = require("drawer")
 
-local kontrol_brand = {
+local Kontrol_brand = {
 "      _  __           _             _     ",
 "     | |/ /          | |           | |    ",
 "     | ' / ___  _ __ | |_ _ __ ___ | |    ",

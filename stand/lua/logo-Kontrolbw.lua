@@ -46,8 +46,6 @@ local Kontrolbw = {
 "  ###     ###                  ",
 "  ###      ###                 ",
 "                               "
-
-
 }
 
 drawer.addLogo("Kontrolbw", {
