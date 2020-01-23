@@ -3,7 +3,7 @@ include		GENERIC
 nooptions	KDB_TRACE
 options		DDB
 
-ident		pfSense
+ident		Kontrol
 
 nooptions	MAC		# TrustedBSD MAC Framework
 nooptions	COMPAT_FREEBSD4	# Compatible with FreeBSD4
@@ -15,7 +15,6 @@ options		GEOM_MIRROR
 options		GEOM_UZIP
 options		GEOM_ELI
 options		GEOM_BDE
-options		XZ		# Used by GEOM_UZIP
 
 options		TMPFS
 options		UNIONFS
@@ -83,7 +82,7 @@ device		uhid		# "Human Interface Devices"
 device		firewire	# FireWire bus code
 device		sbp		# SCSI over FireWire (Requires scbus and da)
 
-# pfsense addons
+# Kontrol addons
 
 device		tap
 device		gre
@@ -102,7 +101,6 @@ options		NETGRAPH		#netgraph(4) system
 options		NETGRAPH_VLAN
 options		NETGRAPH_L2TP
 options		NETGRAPH_BPF
-options		NETGRAPH_ETF
 options		NETGRAPH_ETHER
 options		NETGRAPH_IFACE
 options		NETGRAPH_EIFACE
@@ -175,17 +173,6 @@ device		cxgb		# cxgb -- Chelsio T3 10 Gigabit Ethernet adapter driver
 device		cxgbe		# cxgbe -- Chelsio T5 10 Gigabit Ethernet adapter driver
 #device		nve		# nVidia nForce MCP on-board Ethernet Networking
 device		oce
-device  	mlx4		# Shared code module between IB and Ethernet
-device  	mlx4en		# Mellanox ConnectX HCA Ethernet
-device		mlx5		# Shared code module between IB and Ethernet
-device		mlx5en		# Mellanox ConnectX-4 and ConnectX-4 LX
-device		mlxfw		# Firmware access
-
-# Enable Linux Kernel Programming Interface - required by mlx[45]
-options 	COMPAT_LINUXKPI
-
-# Required by mlx5en
-#options		RATELIMIT		# TX rate limiting support
 
 # Default serial speed
 options		CONSPEED=115200
@@ -193,3 +180,6 @@ options		CONSPEED=115200
 # Enable gpioapu
 #device		gpioapu
 #device		gpiorcc
+
+#Enable uchcom - Kontrol
+device    uchcom
