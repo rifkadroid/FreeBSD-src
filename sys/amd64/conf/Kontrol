@@ -3,7 +3,7 @@ include		GENERIC
 nooptions	KDB_TRACE
 options		DDB
 
-ident		pfSense
+ident		Kontrol
 
 nooptions	MAC		# TrustedBSD MAC Framework
 nooptions	COMPAT_FREEBSD4	# Compatible with FreeBSD4
@@ -83,7 +83,7 @@ device		uhid		# "Human Interface Devices"
 device		firewire	# FireWire bus code
 device		sbp		# SCSI over FireWire (Requires scbus and da)
 
-# pfsense addons
+# Kontrol addons
 
 device		tap
 device		gre
