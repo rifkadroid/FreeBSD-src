@@ -34,8 +34,8 @@ FILES+=	support.4th
 FILES+=	version.4th
 
 # Konntrol
-FILES+=	logo-Konntrolbw.4th
-FILES+=	brand-Konntrol.4th
+FILES+=	logo-Kontrolbw.4th
+FILES+=	brand-Kontrol.4th
 
 # Allow machine specific loader.rc to be installed.
 .for f in loader.rc menu.rc
