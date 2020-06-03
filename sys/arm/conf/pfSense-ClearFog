@@ -1,4 +1,4 @@
 include		ARMADA38X
-include		Kontrol
+include		Konntrol
 
 ident		pfSense-Clearfog
