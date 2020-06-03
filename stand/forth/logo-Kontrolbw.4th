@@ -29,7 +29,7 @@
 	1+ \ increase y for next time we're called
 ;
 
-: logo ( x y -- ) \ B/W Konntrol logotype (15 rows x 32 columns)
+: logo ( x y -- ) \ B/W Kontrol logotype (15 rows x 32 columns)
 
 	s"                               " logo+
 	s"  ###     ###                  " logo+
