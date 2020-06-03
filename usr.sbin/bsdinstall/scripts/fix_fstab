@@ -90,7 +90,7 @@ dev_label() {
 FSTAB=${BSDINSTALL_TMPETC}/fstab
 
 if [ -z "${FSTAB}" -o ! -f "${FSTAB}" ]; then
-	dialog --backtitle "Konntrol Installer" --title "Error" \
+	dialog --backtitle "KONTRL-UTM Installer" --title "Error" \
 	    --msgbox "Error creating device labels" 0 0
 	exit 1
 fi

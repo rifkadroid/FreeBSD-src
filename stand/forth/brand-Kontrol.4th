@@ -30,15 +30,15 @@
 	1+ \ increase y for next time we're called
 ;
 
-: brand ( x y -- ) \ "konntrol" [wide] logo in B/W (7 rows x 42 columns)
+: brand ( x y -- ) \ "Kontrol" [wide] logo in B/W (7 rows x 42 columns)
 
-  s"                                          " brand+
-	s" _  _____  _  _ _  _ _____ ___  ___  _    " brand+
- 	s"| |/ / _ \| \| | \| |_   _| _ \/ _ \| |   " brand+
- 	s"| ' < (_) | .` | .` | | | |   / (_) | |__ " brand+
- 	s"|_|\_\___/|_|\_|_|\_| |_| |_|_\\___/|____|" brand+
- 	s"                                          " brand+
-	s"                                          " brand+
+  s"                                           " brand+
+	s"  _  _____  _  _ _  _ _____ ___  ___  _    " brand+
+ 	s" | |/ / _ \| \| | \| |_   _| _ \/ _ \| |   " brand+
+ 	s" | ' < (_) | .` | .` | | | |   / (_) | |__ " brand+
+ 	s" |_|\_\___/|_|\_|_|\_| |_| |_|_\\___/|____|" brand+
+ 	s"                                           " brand+
+	s"                                           " brand+
 
 	2drop
 ;

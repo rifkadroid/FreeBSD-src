@@ -63,7 +63,7 @@ elif kenv -q smbios.system.product | grep -q "SG-5100"; then
 else
 	# Serial or other console
 	echo
-	echo "Welcome to KONNTROL!"
+	echo "Welcome to KONTROL-UTM!"
 	echo
 	echo "Please choose the appropriate terminal type for your system."
 	echo "Common console types are:"
@@ -80,23 +80,23 @@ export TERM
 
 if [ -f /etc/installerconfig ]; then
 	if bsdinstall script /etc/installerconfig; then
-		dialog --backtitle "Konntrol Installer" --title "Complete" --no-cancel --ok-label "Reboot" --pause "Installation of Konntrol complete! Rebooting in 10 seconds" 10 30 10
+		dialog --backtitle "KONTROL-UTM Installer" --title "Complete" --no-cancel --ok-label "Reboot" --pause "Installation of KONTROL complete! Rebooting in 10 seconds" 10 30 10
 		reboot
 	else
-		dialog --backtitle "Konntrol Installer" --title "Error" --textbox /tmp/bsdinstall_log 0 0
+		dialog --backtitle "KONTROL-UTM Installer" --title "Error" --textbox /tmp/bsdinstall_log 0 0
 	fi
 	exit
 fi
 
 if [ -n "${CE_message}" ]; then
-	msg="KONNTROL is Copyright 2016-2020 Konntrol Tecnologia EPP.\n\nKonntrol is a federally registered trademark Konntrol Tecnologia EPP. Any unauthorized use of this trademark is prohibited by state and federal law and international law. Refer to our Trademark Usage Guidelines for how to properly use the marks. All rights reserved.\n\nAbsolutely No Commercial Distribution Is Allowed."
+	msg="KONTROL-UTM is Copyright 2016-2020 Konntrol Tecnologia EPP.\n\nKONTROL is a federally registered trademark Konntrol Tecnologia EPP. Any unauthorized use of this trademark is prohibited by state and federal law and international law. Refer to our Trademark Usage Guidelines for how to properly use the marks. All rights reserved.\n\nAbsolutely No Commercial Distribution Is Allowed."
 else
-	msg="This software is only for use on platforms supplied by Konntrol Tecnologia EPP.\n\nKONNTROL is Copyright 2016-2020 Konntrol Tecnologia EPP.\n\nKonntrol is a federally registered trademark of Konntrol Tecnologia EPP. Any unauthorized use of this trademark is prohibited by state and federal law and international law. Refer to our Trademark Usage Guidelines for how to properly use the marks. All rights reserved.\n\nAbsolutely No Commercial Distribution Is Allowed"
+	msg="This software is only for use on platforms supplied by Konntrol Tecnologia EPP.\n\nKONTROL-UTM is Copyright 2016-2020 Konntrol Tecnologia EPP.\n\nKONTROL is a federally registered trademark of Konntrol Tecnologia EPP. Any unauthorized use of this trademark is prohibited by state and federal law and international law. Refer to our Trademark Usage Guidelines for how to properly use the marks. All rights reserved.\n\nAbsolutely No Commercial Distribution Is Allowed"
 fi
 
 if [ ! -f /tmp/buildroom ]; then
 	exec 3>&1
-	dialog --backtitle "Konntrol Installer" \
+	dialog --backtitle "KONTROL-UTM Installer" \
 		--title "Copyright and distribution notice" \
 		--ok-label "Accept" \
 		--msgbox "${msg}" 0 0 2>&1 1>&3
@@ -104,7 +104,7 @@ if [ ! -f /tmp/buildroom ]; then
 fi
 
 IOPTS="\
-\"Install\" \"Install Konntrol\" \
+\"Install\" \"Install KONTROL-UTM\" \
 \"Rescue Shell\" \"Launch a shell for rescue operations\""
 
 if [ -x /root/recover_configxml.sh ] ; then
@@ -112,9 +112,9 @@ if [ -x /root/recover_configxml.sh ] ; then
 fi
 
 exec 3>&1
-IMODE=`echo ${IOPTS} | xargs dialog --backtitle "Konntrol Installer" \
+IMODE=`echo ${IOPTS} | xargs dialog --backtitle "KONTROL-UTM Installer" \
 	--title "Welcome" \
-	--menu "Welcome to Konntrol!" \
+	--menu "Welcome to KONTROL-UTM!" \
 	0 0 0 2>&1 1>&3` || exit 1
 exec 3>&-
 
@@ -129,7 +129,7 @@ case "$IMODE" in
 	trap true SIGINT	# Ignore cntrl-C here
 	bsdinstall
 	if [ $? -eq 0 ]; then
-		dialog --backtitle "Konntrol Installer" --title "Complete" --yes-label "Reboot" --no-label "Shell" --yesno "Installation of Konntrol complete! Would you like to reboot into the installed system now?" 0 0 && reboot
+		dialog --backtitle "KONTROL-UTM Installer" --title "Complete" --yes-label "Reboot" --no-label "Shell" --yesno "Installation of KONTROL-UTM complete! Would you like to reboot into the installed system now?" 0 0 && reboot
 		clear
 		echo "When finished, type 'exit' to reboot."
 		/bin/sh
