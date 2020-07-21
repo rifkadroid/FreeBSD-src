@@ -29,8 +29,8 @@ FILES=	cli.lua \
 	password.lua \
 	screen.lua
 
-# pfSense
-FILES+=	logo-pfSensebw.lua \
-	brand-pfSense.lua
+# KONTROL-UTM
+FILES+=	logo-Kontrolbw.lua \
+	brand-Kontrol.lua
 
 .include <bsd.prog.mk>

@@ -3,7 +3,7 @@ include		GENERIC
 nooptions	KDB_TRACE
 options		DDB
 
-ident		pfSense
+ident		Kontrol
 
 nooptions	MAC		# TrustedBSD MAC Framework
 nooptions	COMPAT_FREEBSD4	# Compatible with FreeBSD4
@@ -26,8 +26,6 @@ nooptions	IEEE80211_DEBUG	# enable debug msgs
 device		wlan_rssadapt
 device		wlan_xauth
 device		wlan_acl
-device		iwm
-device		iwmfw
 device		iwifw
 device		ipwfw		# Firmware for Intel PRO/Wireless 2100 IEEE 802.11 driver
 device		wpifw		# Firmware for Intel 3945ABG Wireless LAN IEEE 802.11 driver
@@ -51,8 +49,6 @@ device		rsu
 device		rsufw
 device		rtwn
 device		rtwnfw
-device		rtwn_pci
-device		rtwn_usb
 device		run		# Ralink RT2700U/RT2800U/RT3000U USB 802.11agn
 device		runfw
 device		rue
@@ -85,13 +81,12 @@ device		uhid		# "Human Interface Devices"
 device		firewire	# FireWire bus code
 device		sbp		# SCSI over FireWire (Requires scbus and da)
 
-# pfsense addons
-
-device		xz
+# KONTROL addons
 
 # Required by athp
 options		ALQ
 
+device		tap
 device		gre
 device		if_bridge
 device		carp
@@ -182,13 +177,10 @@ device		cxgb		# cxgb -- Chelsio T3 10 Gigabit Ethernet adapter driver
 device		cxgbe		# cxgbe -- Chelsio T5 10 Gigabit Ethernet adapter driver
 #device		nve		# nVidia nForce MCP on-board Ethernet Networking
 device		oce
-device  	mlxfw
 device  	mlx4		# Shared code module between IB and Ethernet
 device  	mlx4en		# Mellanox ConnectX HCA Ethernet
 device		mlx5		# Shared code module between IB and Ethernet
 device		mlx5en		# Mellanox ConnectX-4 and ConnectX-4 LX
-device		qlxgb		# QLogic 10 Gigabit Ethernet adapter driver
-device		bnxt		# Broadcom NetXtreme-C/NetXtreme-E Family Ethernet driver
 
 # Enable Linux Kernel Programming Interface - required by mlx[45]
 options 	COMPAT_LINUXKPI
@@ -203,5 +195,5 @@ options		CONSPEED=115200
 #device		gpioapu
 #device		gpiorcc
 
-# Enable virtio_console
-device		virtio_console	# VirtIO Console device
+#Enable uchcom - Kontrol
+device    uchcom
