@@ -461,6 +461,7 @@ MAN=	aac.4 \
 	rue.4 \
 	sa.4 \
 	safe.4 \
+	safexcel.4 \
 	sbp.4 \
 	sbp_targ.4 \
 	scc.4 \
@@ -485,6 +486,7 @@ MAN=	aac.4 \
 	sk.4 \
 	${_smartpqi.4} \
 	smb.4 \
+	smbios.4 \
 	smbus.4 \
 	smp.4 \
 	smsc.4 \

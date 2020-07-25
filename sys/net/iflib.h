@@ -228,7 +228,9 @@ typedef struct if_softc_ctx {
 	pci_vendor_info_t isc_vendor_info;	/* set by iflib prior to attach_pre */
 	int isc_disable_msix;
 	if_txrx_t isc_txrx;
+	struct ifmedia *isc_media;
 } *if_softc_ctx_t;
+
 
 /*
  * Initialization values for device
@@ -362,10 +364,20 @@ typedef enum {
  */
 #define IFLIB_ADMIN_ALWAYS_RUN	0x10000
 /*
+ * Driver will pass the media
+ */
+#define IFLIB_DRIVER_MEDIA	0x20000
+/*
  * When using a single hardware interrupt for the interface, only process RX
  * interrupts instead of doing combined RX/TX processing.
  */
 #define	IFLIB_SINGLE_IRQ_RX_ONLY	0x40000
+/*
+ * Don't need/want most of the niceties of
+ * emulating ethernet
+ */
+#define IFLIB_PSEUDO_ETHER	0x80000
+
 
 
 /*
