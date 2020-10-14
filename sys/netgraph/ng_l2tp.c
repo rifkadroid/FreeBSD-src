@@ -656,9 +656,9 @@ ng_l2tp_shutdown(node_p node)
 	/* Reset sequence number state */
 	ng_l2tp_seq_reset(priv);
 
-	/* Free private data if neither timer is running */
-	ng_uncallout(&seq->rack_timer, node);
-	ng_uncallout(&seq->xack_timer, node);
+	/* Wait for callouts to finish executing before freeing anything. */
+	callout_drain(&seq->rack_timer);
+	callout_drain(&seq->xack_timer);
 
 	mtx_destroy(&seq->mtx);
 
@@ -1274,6 +1274,8 @@ ng_l2tp_seq_reset(priv_p priv)
 	/* Sanity check */
 	L2TP_SEQ_CHECK(seq);
 
+	mtx_lock(&seq->mtx);
+
 	/* Stop timers */
 	ng_uncallout(&seq->rack_timer, priv->node);
 	ng_uncallout(&seq->xack_timer, priv->node);
@@ -1299,6 +1301,8 @@ ng_l2tp_seq_reset(priv_p priv)
 	seq->acks = 0;
 	seq->rexmits = 0;
 	bzero(seq->xwin, sizeof(seq->xwin));
+
+	mtx_unlock(&seq->mtx);
 
 	/* Done */
 	L2TP_SEQ_CHECK(seq);
@@ -1453,16 +1457,23 @@ ng_l2tp_seq_rack_timeout(node_p node, hook_p hook, void *arg1, int arg2)
 	struct l2tp_seq *const seq = &priv->seq;
 	struct mbuf *m;
 	u_int delay;
-
-	/* Make sure callout is still active before doing anything */
-	if (callout_pending(&seq->rack_timer) ||
-	    (!callout_active(&seq->rack_timer)))
-		return;
+	uint16_t ns;
 
 	/* Sanity check */
 	L2TP_SEQ_CHECK(seq);
 
 	mtx_lock(&seq->mtx);
+	/* Make sure callout is still active before doing anything */
+	if (callout_pending(&seq->rack_timer) ||
+	    !callout_active(&seq->rack_timer)) {
+		mtx_unlock(&seq->mtx);
+		return;
+	}
+
+	if (seq->xwin[0] == NULL)
+		printf("empty transmit queue: ns %u rack %u active %d",
+		    seq->ns, seq->rack, callout_active(&seq->rack_timer));
+
 	priv->stats.xmitRetransmits++;
 
 	/* Have we reached the retransmit limit? If so, notify owner. */
@@ -1484,11 +1495,12 @@ ng_l2tp_seq_rack_timeout(node_p node, hook_p hook, void *arg1, int arg2)
 
 	/* Retransmit oldest unack'd packet */
 	m = L2TP_COPY_MBUF(seq->xwin[0], M_NOWAIT);
+	ns = seq->ns++;
 	mtx_unlock(&seq->mtx);
 	if (m == NULL)
 		priv->stats.memoryFailures++;
 	else
-		ng_l2tp_xmit_ctrl(priv, m, seq->ns++);
+		ng_l2tp_xmit_ctrl(priv, m, ns);
 
 	/* callout_deactivate() is not needed here 
 	    as ng_callout() is getting called each time */
@@ -1506,8 +1518,8 @@ ng_l2tp_xmit_ctrl(priv_p priv, struct mbuf *m, u_int16_t ns)
 {
 	struct l2tp_seq *const seq = &priv->seq;
 	uint8_t *p;
-	u_int16_t session_id = 0;
 	int error;
+	uint16_t session_id = 0, nr;
 
 	mtx_lock(&seq->mtx);
 
@@ -1516,7 +1528,8 @@ ng_l2tp_xmit_ctrl(priv_p priv, struct mbuf *m, u_int16_t ns)
 	if (callout_active(&seq->xack_timer))
 		ng_uncallout(&seq->xack_timer, priv->node);
 
-	seq->xack = seq->nr;
+	nr = seq->nr;
+	seq->xack = nr;
 
 	mtx_unlock(&seq->mtx);
 
@@ -1571,8 +1584,8 @@ ng_l2tp_xmit_ctrl(priv_p priv, struct mbuf *m, u_int16_t ns)
 	p[7] = session_id & 0xff;
 	p[8] = ns >> 8;
 	p[9] = ns & 0xff;
-	p[10] = seq->nr >> 8;
-	p[11] = seq->nr & 0xff;
+	p[10] = nr >> 8;
+	p[11] = nr & 0xff;
 
 	/* Update sequence number info and stats */
 	priv->stats.xmitPackets++;
