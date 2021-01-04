@@ -72,6 +72,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/sdt.h>
 #include <sys/shm.h>
 #include <sys/sem.h>
+#include <sys/timers.h>
 #include <sys/umtx.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -321,6 +322,8 @@ exit1(struct thread *td, int rval, int signo)
 		mtx_unlock(&ppeers_lock);
 	}
 
+	itimers_exit(p);
+
 	/*
 	 * Check if any loadable modules need anything done at process exit.
 	 * E.g. SYSV IPC stuff.
@@ -355,7 +358,7 @@ exit1(struct thread *td, int rval, int signo)
 
 	/*
 	 * Reset any sigio structures pointing to us as a result of
-	 * F_SETOWN with our pid.
+	 * F_SETOWN with our pid.  The P_WEXIT flag interlocks with fsetown().
 	 */
 	funsetownlst(&p->p_sigiolst);
 

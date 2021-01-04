@@ -394,7 +394,7 @@ SYSCTL_ULONG(_net_pf, OID_AUTO, states_hashsize, CTLFLAG_RDTUN,
     &pf_hashsize, 0, "Size of pf(4) states hashtable");
 SYSCTL_ULONG(_net_pf, OID_AUTO, source_nodes_hashsize, CTLFLAG_RDTUN,
     &pf_srchashsize, 0, "Size of pf(4) source nodes hashtable");
-SYSCTL_ULONG(_net_pf, OID_AUTO, request_maxcount, CTLFLAG_RW,
+SYSCTL_ULONG(_net_pf, OID_AUTO, request_maxcount, CTLFLAG_RWTUN,
     &pf_ioctl_maxcount, 0, "Maximum number of tables, addresses, ... in a single ioctl() call");
 
 VNET_DEFINE(void *, pf_swi_cookie);
@@ -871,7 +871,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
     struct pf_addr *src, sa_family_t af)
 {
 
-	KASSERT((rule->rule_flag & PFRULE_RULESRCTRACK ||
+	KASSERT((rule->rule_flag & PFRULE_SRCTRACK ||
 	    rule->rpool.opts & PF_POOL_STICKYADDR),
 	    ("%s for non-tracking rule %p", __func__, rule));
 

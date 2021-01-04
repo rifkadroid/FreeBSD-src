@@ -68,6 +68,8 @@ __FBSDID("$FreeBSD$");
 #include <sys/sysctl.h>
 #include <sys/sysent.h>
 #include <sys/sysproto.h>
+#include <sys/timers.h>
+#include <sys/umtx.h>
 #include <sys/vnode.h>
 #include <sys/wait.h>
 #ifdef KTRACE
@@ -224,6 +226,7 @@ sys_execve(struct thread *td, struct execve_args *uap)
 	if (error == 0)
 		error = kern_execve(td, &args, NULL, oldvmspace);
 	post_execve(td, error, oldvmspace);
+	AUDIT_SYSCALL_EXIT(error == EJUSTRETURN ? 0 : error, td);
 	return (error);
 }
 
@@ -251,6 +254,7 @@ sys_fexecve(struct thread *td, struct fexecve_args *uap)
 		error = kern_execve(td, &args, NULL, oldvmspace);
 	}
 	post_execve(td, error, oldvmspace);
+	AUDIT_SYSCALL_EXIT(error == EJUSTRETURN ? 0 : error, td);
 	return (error);
 }
 
@@ -279,6 +283,7 @@ sys___mac_execve(struct thread *td, struct __mac_execve_args *uap)
 	if (error == 0)
 		error = kern_execve(td, &args, uap->mac_p, oldvmspace);
 	post_execve(td, error, oldvmspace);
+	AUDIT_SYSCALL_EXIT(error == EJUSTRETURN ? 0 : error, td);
 	return (error);
 #else
 	return (ENOSYS);
@@ -1103,7 +1108,9 @@ exec_new_vmspace(struct image_params *imgp, struct sysentvec *sv)
 	imgp->vmspace_destroyed = 1;
 	imgp->sysent = sv;
 
-	/* May be called with Giant held */
+	umtx_exec(p);
+	itimers_exec(p);
+
 	EVENTHANDLER_DIRECT_INVOKE(process_exec, p, imgp);
 
 	/*

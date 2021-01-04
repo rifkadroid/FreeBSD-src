@@ -1003,7 +1003,7 @@ do_open(const char *vmname)
 int
 main(int argc, char *argv[])
 {
-	int c, error, dbg_port, gdb_port, err, bvmcons;
+	int c, error, dbg_port, err, bvmcons;
 	int max_vcpus, mptgen, memflags;
 	int rtc_localtime;
 	bool gdb_stop;
@@ -1015,7 +1015,6 @@ main(int argc, char *argv[])
 	bvmcons = 0;
 	progname = basename(argv[0]);
 	dbg_port = 0;
-	gdb_port = 0;
 	gdb_stop = false;
 	guest_ncpus = 1;
 	sockets = cores = threads = 1;
@@ -1035,6 +1034,7 @@ main(int argc, char *argv[])
 			acpi = 1;
 			break;
 		case 'b':
+			warnx("-b flag is deprecated and will be removed in FreeBSD 13.0");
 			bvmcons = 1;
 			break;
 		case 'D':
@@ -1056,6 +1056,7 @@ main(int argc, char *argv[])
 			memflags |= VM_MEM_F_INCORE;
 			break;
 		case 'g':
+			warnx("-g flag is deprecated and will be removed in FreeBSD 13.0");
 			dbg_port = atoi(optarg);
 			break;
 		case 'G':
