@@ -1516,6 +1516,7 @@ pf_krule_to_rule(const struct pf_krule *krule, struct pf_rule *rule)
 	}
 
 	strlcpy(rule->label, krule->label, sizeof(rule->label));
+	strlcpy(rule->schedule, krule->schedule, sizeof(rule->schedule));
 	strlcpy(rule->ifname, krule->ifname, sizeof(rule->ifname));
 	strlcpy(rule->qname, krule->qname, sizeof(rule->qname));
 	strlcpy(rule->pqname, krule->pqname, sizeof(rule->pqname));
@@ -1547,6 +1548,9 @@ pf_krule_to_rule(const struct pf_krule *krule, struct pf_rule *rule)
 	rule->max_src_conn_rate.seconds = krule->max_src_conn_rate.seconds;
 	rule->qid = krule->qid;
 	rule->pqid = krule->pqid;
+	rule->dnpipe = krule->dnpipe;
+	rule->pdnpipe = krule->pdnpipe;
+	rule->free_flags = krule->free_flags;
 	rule->rt_listid = krule->rt_listid;
 	rule->nr = krule->nr;
 	rule->prob = krule->prob;
@@ -1653,6 +1657,7 @@ pf_rule_to_krule(const struct pf_rule *rule, struct pf_krule *krule)
 	bcopy(&rule->dst, &krule->dst, sizeof(rule->dst));
 
 	strlcpy(krule->label, rule->label, sizeof(rule->label));
+	strlcpy(krule->schedule, rule->schedule, sizeof(rule->schedule));
 	strlcpy(krule->ifname, rule->ifname, sizeof(rule->ifname));
 	strlcpy(krule->qname, rule->qname, sizeof(rule->qname));
 	strlcpy(krule->pqname, rule->pqname, sizeof(rule->pqname));
@@ -1681,6 +1686,9 @@ pf_rule_to_krule(const struct pf_rule *rule, struct pf_krule *krule)
 	krule->max_src_conn_rate.seconds = rule->max_src_conn_rate.seconds;
 	krule->qid = rule->qid;
 	krule->pqid = rule->pqid;
+	krule->dnpipe = rule->dnpipe;
+	krule->pdnpipe = rule->pdnpipe;
+	krule->free_flags = rule->free_flags;
 	krule->rt_listid = rule->rt_listid;
 	krule->nr = rule->nr;
 	krule->prob = rule->prob;
@@ -2039,17 +2047,19 @@ pfioctl(struct cdev *dev, u_long cmd, caddr_t addr, int flags, struct thread *td
 			tail = TAILQ_FIRST(ruleset->rules[rs_num].active.ptr);
 			while ((tail != NULL) && (tail->cuid != rule->cuid))
 				tail = TAILQ_NEXT(tail, entries);
+			counter_u64_zero(rule->evaluations);
+			for (int i = 0; i < 2; i++) {
+				counter_u64_zero(rule->packets[i]);
+				counter_u64_zero(rule->bytes[i]);
+			}
 			if (tail != NULL) {
-				rule->evaluations = tail->evaluations;
+				counter_u64_add(rule->evaluations,
+				    counter_u64_fetch(tail->evaluations));
 				for (int i = 0; i < 2; i++) {
-					rule->bytes[i] = tail->bytes[i];
-					rule->packets[i] = tail->packets[i];
-				}
-			} else {
-				counter_u64_zero(rule->evaluations);
-				for (int i = 0; i < 2; i++) {
-					counter_u64_zero(rule->packets[i]);
-					counter_u64_zero(rule->bytes[i]);
+					counter_u64_add(rule->bytes[i],
+					    counter_u64_fetch(tail->bytes[i]));
+					counter_u64_add(rule->packets[i],
+					    counter_u64_fetch(tail->packets[i]));
 				}
 			}
 		} else {
