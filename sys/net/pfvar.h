@@ -40,6 +40,7 @@
 #include <sys/counter.h>
 #include <sys/cpuset.h>
 #include <sys/malloc.h>
+#include <sys/nv.h>
 #include <sys/refcount.h>
 #include <sys/sysctl.h>
 #include <sys/lock.h>
@@ -308,6 +309,7 @@ struct pf_kpool {
 	struct pf_kpooladdr	*cur;
 	struct pf_poolhashkey	 key;
 	struct pf_addr		 counter;
+	struct pf_mape_portset	 mape;
 	int			 tblidx;
 	u_int16_t		 proxy_port[2];
 	u_int8_t		 opts;
@@ -322,8 +324,7 @@ struct pf_krule {
 	struct pf_rule_addr	 src;
 	struct pf_rule_addr	 dst;
 	union pf_krule_ptr	 skip[PF_SKIP_COUNT];
-	char			 label[PF_RULE_LABEL_SIZE];
-	char                     schedule[PF_RULE_LABEL_SIZE];
+	char			 label[PF_RULE_MAX_LABEL_COUNT][PF_RULE_LABEL_SIZE];
 	char			 ifname[IFNAMSIZ];
 	char			 qname[PF_QNAME_SIZE];
 	char			 pqname[PF_QNAME_SIZE];
@@ -360,7 +361,6 @@ struct pf_krule {
 	u_int32_t		 dnpipe;
 	u_int32_t		 pdnpipe;
 	u_int32_t                free_flags;
-	u_int32_t		 rt_listid;
 	u_int32_t		 nr;
 	u_int32_t		 prob;
 #ifdef PF_USER_INFO
@@ -385,6 +385,7 @@ struct pf_krule {
 	struct pf_rule_gid	 gid;
 
 	u_int32_t		 rule_flag;
+	uint32_t		 rule_ref;
 	u_int8_t		 action;
 	u_int8_t		 direction;
 	u_int8_t		 log;
@@ -405,29 +406,6 @@ struct pf_krule {
 	u_int8_t		 allow_opts;
 	u_int8_t		 rt;
 	u_int8_t		 return_ttl;
-
-#ifndef DSCP_EF
-/* Copied from altq_cdnr.h */
-/* diffserve code points */
-#define DSCP_MASK	0xfc
-#define DSCP_CUMASK	0x03
-#define DSCP_VA		0xb0
-#define DSCP_EF		0xb8
-#define DSCP_AF11	0x28
-#define DSCP_AF12	0x30
-#define DSCP_AF13	0x38
-#define DSCP_AF21	0x48
-#define DSCP_AF22	0x50
-#define DSCP_AF23	0x58
-#define DSCP_AF31	0x68
-#define DSCP_AF32	0x70
-#define DSCP_AF33	0x78
-#define DSCP_AF41	0x88
-#define DSCP_AF42	0x90
-#define DSCP_AF43	0x98
-#define AF_CLASSMASK	0xe0
-#define AF_DROPPRECMASK	0x18
-#endif
 	u_int8_t		 tos;
 	u_int8_t		 set_tos;
 	u_int8_t		 anchor_relative;
@@ -442,10 +420,6 @@ struct pf_krule {
 		u_int16_t		port;
 	}			divert;
 };
-
-/* rule flags for TOS or DSCP differentiation */
-#define	PFRULE_TOS		0x2000
-#define	PFRULE_DSCP		0x4000
 
 struct pf_ksrc_node {
 	LIST_ENTRY(pf_ksrc_node) entry;
@@ -564,6 +538,7 @@ struct pf_state {
 	struct pf_addr		 rt_addr;
 	struct pf_state_key	*key[2];	/* addresses stack and wire  */
 	struct pfi_kkif		*kif;
+	struct pfi_kkif		*orig_kif;	/* The real kif, even if we're a floating state (i.e. if == V_pfi_all). */
 	struct pfi_kkif		*rt_kif;
 	struct pf_ksrc_node	*src_node;
 	struct pf_ksrc_node	*nat_src_node;
@@ -1043,6 +1018,7 @@ struct pf_kstatus {
 	uint32_t	hostid;
 	char		ifname[IFNAMSIZ];
 	uint8_t		pf_chksum[PF_MD5_DIGEST_LENGTH];
+	bool		keep_counters;
 };
 
 struct pf_divert {
@@ -1120,6 +1096,21 @@ struct pfioc_src_node_kill {
 	u_int		    psnk_killed;
 };
 
+#ifdef _KERNEL
+struct pf_kstate_kill {
+	struct pf_state_cmp	psk_pfcmp;
+	sa_family_t		psk_af;
+	int			psk_proto;
+	struct pf_rule_addr	psk_src;
+	struct pf_rule_addr	psk_dst;
+	struct pf_rule_addr	psk_rt_addr;
+	char			psk_ifname[IFNAMSIZ];
+	char			psk_label[PF_RULE_LABEL_SIZE];
+	u_int			psk_killed;
+	bool			psk_kill_match;
+};
+#endif
+
 struct pfioc_state_kill {
 	struct pf_state_cmp	psk_pfcmp;
 	sa_family_t		psk_af;
@@ -1129,11 +1120,6 @@ struct pfioc_state_kill {
 	char			psk_ifname[IFNAMSIZ];
 	char			psk_label[PF_RULE_LABEL_SIZE];
 	u_int			psk_killed;
-};
-
-struct pfioc_schedule_kill {
-	int		numberkilled;
-	char		schedule[PF_RULE_LABEL_SIZE];
 };
 
 struct pfioc_states {
@@ -1286,17 +1272,22 @@ struct pfioc_iface {
 #define DIOCSTART	_IO  ('D',  1)
 #define DIOCSTOP	_IO  ('D',  2)
 #define DIOCADDRULE	_IOWR('D',  4, struct pfioc_rule)
+#define DIOCADDRULENV	_IOWR('D',  4, struct pfioc_nv)
 #define DIOCGETRULES	_IOWR('D',  6, struct pfioc_rule)
 #define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule)
+#define DIOCGETRULENV	_IOWR('D',  7, struct pfioc_nv)
 /* XXX cut 8 - 17 */
 #define DIOCCLRSTATES	_IOWR('D', 18, struct pfioc_state_kill)
+#define DIOCCLRSTATESNV	_IOWR('D', 18, struct pfioc_nv)
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
+#define DIOCGETSTATENV	_IOWR('D', 19, struct pfioc_nv)
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
 #define DIOCCLRSTATUS	_IO  ('D', 22)
 #define DIOCNATLOOK	_IOWR('D', 23, struct pfioc_natlook)
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 #define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)
+#define DIOCGETSTATESNV	_IOWR('D', 25, struct pfioc_nv)
 #define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_rule)
 /* XXX cut 26 - 28 */
 #define DIOCSETTIMEOUT	_IOWR('D', 29, struct pfioc_tm)
@@ -1306,6 +1297,7 @@ struct pfioc_iface {
 #define DIOCGETLIMIT	_IOWR('D', 39, struct pfioc_limit)
 #define DIOCSETLIMIT	_IOWR('D', 40, struct pfioc_limit)
 #define DIOCKILLSTATES	_IOWR('D', 41, struct pfioc_state_kill)
+#define DIOCKILLSTATESNV	_IOWR('D', 41, struct pfioc_nv)
 #define DIOCSTARTALTQ	_IO  ('D', 42)
 #define DIOCSTOPALTQ	_IO  ('D', 43)
 #define DIOCADDALTQV0	_IOWR('D', 45, struct pfioc_altq_v0)
@@ -1355,6 +1347,8 @@ struct pfioc_iface {
 #define	DIOCSETIFFLAG	_IOWR('D', 89, struct pfioc_iface)
 #define	DIOCCLRIFFLAG	_IOWR('D', 90, struct pfioc_iface)
 #define	DIOCKILLSRCNODES	_IOWR('D', 91, struct pfioc_src_node_kill)
+#define	DIOCKEEPCOUNTERS	_IOWR('D', 92, struct pfioc_nv)
+
 struct pf_ifspeed_v0 {
 	char			ifname[IFNAMSIZ];
 	u_int32_t		baudrate;
@@ -1372,7 +1366,6 @@ struct pf_ifspeed_v1 {
 
 #define	DIOCGIFSPEEDV0	_IOWR('D', 92, struct pf_ifspeed_v0)
 #define	DIOCGIFSPEEDV1	_IOWR('D', 92, struct pf_ifspeed_v1)
-#define	DIOCKILLSCHEDULE	_IOWR('D', 96, struct pfioc_schedule_kill)
 
 /*
  * Compatibility and convenience macros
@@ -1505,6 +1498,7 @@ extern int			 pf_unlink_state(struct pf_state *, u_int);
 #define	PF_ENTER_LOCKED		0x00000001
 #define	PF_RETURN_LOCKED	0x00000002
 extern int			 pf_state_insert(struct pfi_kkif *,
+				    struct pfi_kkif *,
 				    struct pf_state_key *,
 				    struct pf_state_key *,
 				    struct pf_state *);
@@ -1693,6 +1687,8 @@ int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_kruleset(struct pf_kruleset *);
 int			 pf_kanchor_setup(struct pf_krule *,
 			    const struct pf_kruleset *, const char *);
+int			 pf_kanchor_nvcopyout(const struct pf_kruleset *,
+			    const struct pf_krule *, nvlist_t *);
 int			 pf_kanchor_copyout(const struct pf_kruleset *,
 			    const struct pf_krule *, struct pfioc_rule *);
 void			 pf_kanchor_remove(struct pf_krule *);

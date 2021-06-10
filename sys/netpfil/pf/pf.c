@@ -58,6 +58,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/md5.h>
 #include <sys/random.h>
 #include <sys/refcount.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <sys/taskqueue.h>
@@ -114,6 +115,15 @@ __FBSDID("$FreeBSD$");
 #include <security/mac/mac_framework.h>
 
 #define	DPFPRINTF(n, x)	if (V_pf_status.debug >= (n)) printf x
+
+SDT_PROVIDER_DEFINE(pf);
+SDT_PROBE_DEFINE4(pf, ip, test, done, "int", "int", "struct pf_krule *",
+    "struct pf_state *");
+SDT_PROBE_DEFINE4(pf, ip, test6, done, "int", "int", "struct pf_krule *",
+    "struct pf_state *");
+SDT_PROBE_DEFINE5(pf, ip, state, lookup, "struct pfi_kkif *",
+    "struct pf_state_key_cmp *", "int", "struct pf_pdesc *",
+    "struct pf_state *");
 
 /*
  * Global variables
@@ -352,6 +362,7 @@ VNET_DEFINE(struct pf_limit, pf_limits[PF_LIMIT_MAX]);
 #define	STATE_LOOKUP(i, k, d, s, _off, _pd)				\
 	do {								\
 		(s) = pf_find_state((i), (k), (d));			\
+		SDT_PROBE5(pf, ip, state, lookup, i, k, d, pd, (s));	\
 		if ((s) == NULL)					\
 			return (PF_DROP);				\
 		if (PACKET_LOOPED(_pd)) {				\
@@ -361,14 +372,15 @@ VNET_DEFINE(struct pf_limit, pf_limits[PF_LIMIT_MAX]);
 			return (PF_PASS);				\
 		}							\
 		if ((d) == PF_OUT &&					\
-		    (((s)->rule.ptr->rt == PF_ROUTETO &&		\
-		    (s)->rule.ptr->direction == PF_OUT)) &&		\
+		    (s)->rule.ptr->rt == PF_ROUTETO &&			\
+		    (s)->rule.ptr->direction == PF_OUT &&		\
 		    (s)->rt_kif != NULL &&				\
 		    (s)->rt_kif != (i))					\
 			return (PF_PASS);				\
 	} while (0)
 
-#define	BOUND_IFACE(r, k) k
+#define	BOUND_IFACE(r, k) \
+	((r)->rule_flag & PFRULE_IFBOUND) ? (k) : V_pfi_all
 
 #define	STATE_INC_COUNTERS(s)						\
 	do {								\
@@ -1346,8 +1358,8 @@ pf_state_key_clone(struct pf_state_key *orig)
 }
 
 int
-pf_state_insert(struct pfi_kkif *kif, struct pf_state_key *skw,
-    struct pf_state_key *sks, struct pf_state *s)
+pf_state_insert(struct pfi_kkif *kif, struct pfi_kkif *orig_kif,
+    struct pf_state_key *skw, struct pf_state_key *sks, struct pf_state *s)
 {
 	struct pf_idhash *ih;
 	struct pf_state *cur;
@@ -1360,6 +1372,7 @@ pf_state_insert(struct pfi_kkif *kif, struct pf_state_key *skw,
 	KASSERT(s->refs == 0, ("%s: state not pristine", __func__));
 
 	s->kif = kif;
+	s->orig_kif = orig_kif;
 
 	if (s->id == 0 && s->creatorid == 0) {
 		/* XXX: should be atomic, but probability of collision low */
@@ -1456,8 +1469,7 @@ pf_find_state(struct pfi_kkif *kif, struct pf_state_key_cmp *key, u_int dir)
 
 	/* List is sorted, if-bound states before floating ones. */
 	TAILQ_FOREACH(s, &sk->states[idx], key_list[idx])
-		/* if (s->kif == V_pfi_all || s->kif == kif) { */
-		{
+		if (s->kif == V_pfi_all || s->kif == kif) {
 			PF_STATE_LOCK(s);
 			PF_HASHROW_UNLOCK(kh);
 			if (s->timeout >= PFTM_MAX) {
@@ -1723,7 +1735,7 @@ pf_purge_expired_src_nodes()
 			pf_unlink_src_node(cur);
 			LIST_INSERT_HEAD(&freelist, cur, entry);
 		} else if (cur->rule.ptr != NULL)
-			cur->rule.ptr->rule_flag |= PFRULE_REFS;
+			cur->rule.ptr->rule_ref |= PFRULE_REFS;
 	    PF_HASHROW_UNLOCK(sh);
 	}
 
@@ -1866,11 +1878,11 @@ relock:
 					    pf_unlink_state(s, PF_ENTER_LOCKED);
 					goto relock;
 				}
-				s->rule.ptr->rule_flag |= PFRULE_REFS;
+				s->rule.ptr->rule_ref |= PFRULE_REFS;
 				if (s->nat_rule.ptr != NULL)
-					s->nat_rule.ptr->rule_flag |= PFRULE_REFS;
+					s->nat_rule.ptr->rule_ref |= PFRULE_REFS;
 				if (s->anchor.ptr != NULL)
-					s->anchor.ptr->rule_flag |= PFRULE_REFS;
+					s->anchor.ptr->rule_ref |= PFRULE_REFS;
 				s->kif->pfik_flags |= PFI_IFLAG_REFS;
 				if (s->rt_kif)
 					s->rt_kif->pfik_flags |= PFI_IFLAG_REFS;
@@ -1922,11 +1934,11 @@ pf_purge_unlinked_rules()
 	TAILQ_INIT(&tmpq);
 	PF_UNLNKDRULES_LOCK();
 	TAILQ_FOREACH_SAFE(r, &V_pf_unlinked_rules, entries, r1) {
-		if (!(r->rule_flag & PFRULE_REFS)) {
+		if (!(r->rule_ref & PFRULE_REFS)) {
 			TAILQ_REMOVE(&V_pf_unlinked_rules, r, entries);
 			TAILQ_INSERT_TAIL(&tmpq, r, entries);
 		} else
-			r->rule_flag &= ~PFRULE_REFS;
+			r->rule_ref &= ~PFRULE_REFS;
 	}
 	PF_UNLNKDRULES_UNLOCK();
 
@@ -3678,11 +3690,7 @@ pf_test_rule(struct pf_krule **rm, struct pf_state **sm, int direction,
 		/* icmp only. type always 0 in other cases */
 		else if (r->code && r->code != icmpcode + 1)
 			r = TAILQ_NEXT(r, entries);
-		else if ((r->rule_flag & PFRULE_TOS) && r->tos &&
-		    !(r->tos == pd->tos))
-			r = TAILQ_NEXT(r, entries);
-		else if ((r->rule_flag & PFRULE_DSCP) && r->tos &&
-		    !(r->tos == (pd->tos & DSCP_MASK)))
+		else if (r->tos && !(r->tos == pd->tos))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
@@ -4006,7 +4014,7 @@ pf_create_state(struct pf_krule *r, struct pf_krule *nr, struct pf_krule *a,
 		    __func__, nr, sk, nk));
 
 	/* Swap sk/nk for PF_OUT. */
-	if (pf_state_insert(BOUND_IFACE(r, kif),
+	if (pf_state_insert(BOUND_IFACE(r, kif), kif,
 	    (pd->dir == PF_IN) ? sk : nk,
 	    (pd->dir == PF_IN) ? nk : sk, s)) {
 		if (pd->proto == IPPROTO_TCP)
@@ -4128,9 +4136,6 @@ pf_test_fragment(struct pf_krule **rm, int direction, struct pfi_kkif *kif,
 		    r->dst.neg, NULL, M_GETFIB(m)))
 			r = r->skip[PF_SKIP_DST_ADDR].ptr;
 		else if (r->tos && !(r->tos == pd->tos))
-			r = TAILQ_NEXT(r, entries);
-		else if ((r->rule_flag & PFRULE_DSCP) && r->tos &&
-		    !(r->tos == (pd->tos & DSCP_MASK)))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
@@ -6799,6 +6804,8 @@ continueprocessing:
 	if (s)
 		PF_STATE_UNLOCK(s);
 
+	SDT_PROBE4(pf, ip, test, done, action, reason, r, s);
+
 	return (action);
 }
 #endif /* INET */
@@ -7299,6 +7306,8 @@ continueprocessing6:
 	if (action == PF_PASS && *m0 && (pflags & PFIL_FWD) &&
 	    (mtag = m_tag_find(m, PF_REASSEMBLED, NULL)) != NULL)
 		action = pf_refragment6(ifp, m0, mtag);
+
+	SDT_PROBE4(pf, ip, test6, done, action, reason, r, s);
 
 	return (action);
 }

@@ -10,8 +10,12 @@ ATF_TESTS_SH+=	anchor \
 		checksum \
 		forward \
 		fragmentation \
+		icmp \
+		killstate \
+		map_e \
 		names \
 		nat \
+		rules_counter \
 		set_tos \
 		src_track \
 		rdr \
@@ -20,8 +24,10 @@ ATF_TESTS_SH+=	anchor \
 		set_skip \
 		pfsync \
 		table \
-		tos \
-		icmp
+		tos
+
+ATF_TESTS_SH+=	\
+	pfsense_match
 
 ${PACKAGE}FILES+=	utils.subr \
 			echo_inetd.conf \

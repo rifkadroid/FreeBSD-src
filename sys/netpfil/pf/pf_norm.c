@@ -790,7 +790,11 @@ pf_reassemble(struct mbuf **m0, struct ip *ip, int dir, u_short *reason)
 	}
 
 	ip = mtod(m, struct ip *);
+	ip->ip_sum = pf_cksum_fixup(ip->ip_sum, ip->ip_len,
+	    htons(hdrlen + total), 0);
 	ip->ip_len = htons(hdrlen + total);
+	ip->ip_sum = pf_cksum_fixup(ip->ip_sum, ip->ip_off,
+	    ip->ip_off & ~(IP_MF|IP_OFFMASK), 0);
 	ip->ip_off &= ~(IP_MF|IP_OFFMASK);
 
 	if (hdrlen + total > IP_MAXPACKET) {
@@ -996,7 +1000,6 @@ pf_refragment6(struct ifnet *ifp, struct mbuf **m0, struct m_tag *mtag)
 	for (t = m; m; m = t) {
 		t = m->m_nextpkt;
 		m->m_nextpkt = NULL;
-		m->m_pkthdr.rcvif = ifp;
 		m->m_flags |= M_SKIP_FIREWALL;
 		memset(&pd, 0, sizeof(pd));
 		pd.pf_mtag = pf_find_mtag(m);

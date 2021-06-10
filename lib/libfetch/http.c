@@ -73,6 +73,7 @@ __FBSDID("$FreeBSD$");
 #include <locale.h>
 #include <netdb.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1372,51 +1373,12 @@ http_authorize(conn_t *conn, const char *hdr, http_auth_challenges_t *cs,
 /*****************************************************************************
  * Helper functions for connecting to a server or proxy
  */
-static int
-http_connect_tunnel(conn_t *conn, struct url *URL, struct url *purl, int isproxyauth)
-{
-	const char *p;
-	http_auth_challenges_t proxy_challenges;
-	init_http_auth_challenges(&proxy_challenges);
-	http_cmd(conn, "CONNECT %s:%d HTTP/1.1",
-	      URL->host, URL->port);
-	http_cmd(conn, "Host: %s:%d",
-	      URL->host, URL->port);
-	if (isproxyauth > 0)
-	{
-		http_auth_params_t aparams;
-		init_http_auth_params(&aparams);
-		if (*purl->user || *purl->pwd) {
-			aparams.user = strdup(purl->user);
-			aparams.password = strdup(purl->pwd);
-		} else if ((p = getenv("HTTP_PROXY_AUTH")) != NULL &&
-			    *p != '\0') {
-			if (http_authfromenv(p, &aparams) < 0) {
-				http_seterr(HTTP_NEED_PROXY_AUTH);
-				return HTTP_PROTOCOL_ERROR;
-			}
-		} else if (fetch_netrc_auth(purl) == 0) {
-			aparams.user = strdup(purl->user);
-			aparams.password = strdup(purl->pwd);
-		}
-		else {
-			// No auth information found in system - exiting with warning.
-			warnx("Missing username and/or password set");
-			return HTTP_PROTOCOL_ERROR;
-		}
-		http_authorize(conn, "Proxy-Authorization",
-				&proxy_challenges, &aparams, purl);
-		clean_http_auth_params(&aparams);
-	}
-	http_cmd(conn, "");
-	return 0;
-}
 
 /*
  * Connect to the correct HTTP server or proxy.
  */
 static conn_t *
-http_connect(struct url *URL, struct url *purl, const char *flags, int isproxyauth)
+http_connect(struct url *URL, struct url *purl, const char *flags)
 {
 	struct url *curl;
 	conn_t *conn;
@@ -1426,6 +1388,8 @@ http_connect(struct url *URL, struct url *purl, const char *flags, int isproxyau
 	int verbose;
 	int af, val;
 	int serrno;
+	bool isproxyauth = false;
+	http_auth_challenges_t proxy_challenges;
 
 #ifdef INET6
 	af = AF_UNSPEC;
@@ -1443,22 +1407,58 @@ http_connect(struct url *URL, struct url *purl, const char *flags, int isproxyau
 
 	curl = (purl != NULL) ? purl : URL;
 
+retry:
 	if ((conn = fetch_connect(curl->host, curl->port, af, verbose)) == NULL)
 		/* fetch_connect() has already set an error code */
 		return (NULL);
 	init_http_headerbuf(&headerbuf);
-	if (strcasecmp(URL->scheme, SCHEME_HTTPS) == 0 && purl) {
-		if (http_connect_tunnel(conn, URL, purl, isproxyauth) > 0) {
-			fetch_syserr();
-			goto ouch;
+	if (strcmp(URL->scheme, SCHEME_HTTPS) == 0 && purl) {
+		init_http_auth_challenges(&proxy_challenges);
+		http_cmd(conn, "CONNECT %s:%d HTTP/1.1", URL->host, URL->port);
+		http_cmd(conn, "Host: %s:%d", URL->host, URL->port);
+		if (isproxyauth) {
+			http_auth_params_t aparams;
+			init_http_auth_params(&aparams);
+			if (*purl->user || *purl->pwd) {
+				aparams.user = strdup(purl->user);
+				aparams.password = strdup(purl->pwd);
+			} else if ((p = getenv("HTTP_PROXY_AUTH")) != NULL &&
+				    *p != '\0') {
+				if (http_authfromenv(p, &aparams) < 0) {
+					http_seterr(HTTP_NEED_PROXY_AUTH);
+					fetch_syserr();
+					goto ouch;
+				}
+			} else if (fetch_netrc_auth(purl) == 0) {
+				aparams.user = strdup(purl->user);
+				aparams.password = strdup(purl->pwd);
+			} else {
+				/*
+				 * No auth information found in system - exiting
+				 * with warning.
+				 */
+				warnx("Missing username and/or password set");
+				fetch_syserr();
+				goto ouch;
+			}
+			http_authorize(conn, "Proxy-Authorization",
+			    &proxy_challenges, &aparams, purl);
+			clean_http_auth_params(&aparams);
 		}
-		/* Get replay from CONNECT Tunnel attempt */
+		http_cmd(conn, "");
+		/* Get reply from CONNECT Tunnel attempt */
 		int httpreply = http_get_reply(conn);
 		if (httpreply != HTTP_OK) {
 			http_seterr(httpreply);
 			/* If the error is a 407/HTTP_NEED_PROXY_AUTH */
-			if (httpreply == HTTP_NEED_PROXY_AUTH)
-				goto proxyauth;
+			if (httpreply == HTTP_NEED_PROXY_AUTH &&
+			    ! isproxyauth) {
+				/* Try again with authentication. */
+				clean_http_headerbuf(&headerbuf);
+				fetch_close(conn);
+				isproxyauth = true;
+				goto retry;
+			}
 			goto ouch;
 		}
 		/* Read and discard the rest of the proxy response */
@@ -1479,7 +1479,7 @@ http_connect(struct url *URL, struct url *purl, const char *flags, int isproxyau
 			}
 		} while (h > hdr_end);
 	}
-	if (strcasecmp(URL->scheme, SCHEME_HTTPS) == 0 &&
+	if (strcmp(URL->scheme, SCHEME_HTTPS) == 0 &&
 	    fetch_ssl(conn, URL, verbose) == -1) {
 		/* grrr */
 		errno = EAUTH;
@@ -1498,15 +1498,6 @@ ouch:
 	fetch_close(conn);
 	errno = serrno;
 	return (NULL);
-proxyauth:
-	/* returning a "dummy" object with error 
-	 * set to 407/HTTP_NEED_PROXY_AUTH */
-	serrno = errno;
-	clean_http_headerbuf(&headerbuf);
-	fetch_close(conn);
-	errno = serrno;
-	conn->err = HTTP_NEED_PROXY_AUTH;
-	return (conn);
 }
 
 static struct url *
@@ -1525,7 +1516,7 @@ http_get_proxy(struct url * url, const char *flags)
 			strcpy(purl->scheme, SCHEME_HTTP);
 		if (!purl->port)
 			purl->port = fetch_default_proxy_port(purl->scheme);
-		if (strcasecmp(purl->scheme, SCHEME_HTTP) == 0)
+		if (strcmp(purl->scheme, SCHEME_HTTP) == 0)
 			return (purl);
 		fetchFreeURL(purl);
 	}
@@ -1655,18 +1646,8 @@ http_request_body(struct url *URL, const char *op, struct url_stat *us,
 		}
 
 		/* connect to server or proxy */
-		/* Getting connection without proxy connection */
-		if ((conn = http_connect(url, purl, flags, 0)) == NULL)
+		if ((conn = http_connect(url, purl, flags)) == NULL)
 			goto ouch;
-
-		/* If returning object request proxy auth, rerun the connect with proxy auth */
-		if (conn->err == HTTP_NEED_PROXY_AUTH) {
-			/* Retry connection with proxy auth */
-			if ((conn = http_connect(url, purl, flags, 1)) == NULL) {
-				http_seterr(HTTP_NEED_PROXY_AUTH);
-				goto ouch;
-			}
-		}
 
 		/* append port number only if necessary */
 		host = url->host;
@@ -1679,7 +1660,7 @@ http_request_body(struct url *URL, const char *op, struct url_stat *us,
 		if (verbose)
 			fetch_info("requesting %s://%s%s",
 			    url->scheme, host, url->doc);
-		if (purl && strcasecmp(URL->scheme, SCHEME_HTTPS) != 0) {
+		if (purl && strcmp(URL->scheme, SCHEME_HTTPS) != 0) {
 			http_cmd(conn, "%s %s://%s%s HTTP/1.1",
 			    op, url->scheme, host, url->doc);
 		} else {
