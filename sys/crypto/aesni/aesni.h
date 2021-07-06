@@ -51,15 +51,15 @@
 #define	AES192_ROUNDS	12
 #define	AES256_ROUNDS	14
 #define	AES_SCHED_LEN	((AES256_ROUNDS + 1) * AES_BLOCK_LEN)
-#define	AES_SCHED_ALIGN	16
+
+/* SHA1, SHA2-224 and SHA2-256 only. */
+#define	AESNI_SHA_BLOCK_LEN	64
 
 struct aesni_session {
-	uint8_t schedules[3 * AES_SCHED_LEN + AES_SCHED_ALIGN];
-	uint8_t *enc_schedule;
-	uint8_t *dec_schedule;
-	uint8_t *xts_schedule;
-	/* Same as the SHA256 Blocksize. */
-	uint8_t hmac_key[SHA1_BLOCK_LEN] __aligned(16);
+	uint8_t enc_schedule[AES_SCHED_LEN] __aligned(16);
+	uint8_t dec_schedule[AES_SCHED_LEN] __aligned(16);
+	uint8_t xts_schedule[AES_SCHED_LEN] __aligned(16);
+	uint8_t hmac_key[AESNI_SHA_BLOCK_LEN];
 	int algo;
 	int rounds;
 	/* uint8_t *ses_ictx; */
