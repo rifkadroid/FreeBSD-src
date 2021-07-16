@@ -77,7 +77,8 @@ __FBSDID("$FreeBSD: src/sys/dev/re/if_re.c,v 1.95.00 " __DATE__ " " __TIME__ "  
 #include <sys/endian.h>
 
 #include <dev/mii/mii.h>
-#include <dev/re/if_rereg.h>
+#include "if_rereg.h"
+#include "queue.h"
 
 #if OS_VER < VERSION(5,3)
 #include <pci/pcireg.h>
@@ -7504,7 +7505,7 @@ struct re_softc		*sc;
         for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
              ifma = ifma->ifma_link.le_next)
 #else
-        TAILQ_FOREACH(ifma,&ifp->if_multiaddrs,ifma_link)
+        LOCAL_TAILQ_FOREACH(ifma,&ifp->if_multiaddrs,ifma_link)
 #endif
         {
                 if (ifma->ifma_addr->sa_family != AF_LINK)
