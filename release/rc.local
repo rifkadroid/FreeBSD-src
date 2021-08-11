@@ -177,7 +177,7 @@ case "$IMODE" in
 	fi
 
 	trap true SIGINT	# Ignore cntrl-C here
-	env ZFSBOOT_POOL_NAME=pfSense bsdinstall
+	env ZFSBOOT_POOL_NAME=Kontrol bsdinstall
 	if [ $? -eq 0 ]; then
 		dialog --backtitle "Kontrol Installer" --title "Complete" --yes-label "Reboot" --no-label "Shell" --yesno "Installation of Kontrol complete! Would you like to reboot into the installed system now?" 0 0 && reboot
 		clear
