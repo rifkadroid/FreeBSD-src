@@ -1,4 +1,6 @@
 /*-
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
  * Copyright (C) 2013 Emulex
  * All rights reserved.
  *
@@ -119,7 +121,7 @@ oce_dma_free(POCE_SOFTC sc, POCE_DMA_MEM dma)
 
 	bus_dma_tag_destroy(dma->tag);
 	dma->tag = NULL;
-
+	
 	return;
 }
 
@@ -170,7 +172,7 @@ oce_create_ring_buffer(POCE_SOFTC sc,
 
 
 	ring = malloc(sizeof(oce_ring_buffer_t), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ring == NULL)
+	if (ring == NULL) 
 		return NULL;
 
 	ring->item_size = item_size;
@@ -197,9 +199,9 @@ oce_create_ring_buffer(POCE_SOFTC sc,
 	bus_dmamap_sync(ring->dma.tag, ring->dma.map,
 			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	ring->dma.paddr = 0;
-
+	
 	return ring;
-
+	
 fail:
 	oce_dma_free(sc, &ring->dma);
 	free(ring, M_DEVBUF);
