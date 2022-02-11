@@ -61,7 +61,6 @@
 #define	INTR_EN				0x20000000
 #define	IMAGE_TRANSFER_SIZE		(32 * 1024)	/* 32K at a time */
 
-
 /********* UE Status and Mask Registers ***/
 #define PCICFG_UE_STATUS_LOW                    0xA0
 #define PCICFG_UE_STATUS_HIGH                   0xA4
@@ -209,7 +208,7 @@
 /* Max multicast filter size*/
 #define OCE_MAX_MC_FILTER_SIZE		64
 
-/* PCI SLI (Service Level Interface) capabilities register */ 
+/* PCI SLI (Service Level Interface) capabilities register */
 #define OCE_INTF_REG_OFFSET		0x58
 #define OCE_INTF_VALID_SIG		6	/* register's signature */
 #define OCE_INTF_FUNC_RESET_REQD	1
@@ -271,8 +270,6 @@ typedef union pci_sli_intf_u {
 	} bits;
 } pci_sli_intf_t;
 
-
-
 /* physical address structure to be used in MBX */
 struct phys_addr {
 	/* dw0 */
@@ -280,8 +277,6 @@ struct phys_addr {
 	/* dw1 */
 	uint32_t hi;
 };
-
-
 
 typedef union pcicfg_intr_ctl_u {
 	uint32_t dw0;
@@ -304,9 +299,6 @@ typedef union pcicfg_intr_ctl_u {
 	} bits;
 } pcicfg_intr_ctl_t;
 
-
-
-
 typedef union pcicfg_semaphore_u {
 	uint32_t dw0;
 	struct {
@@ -319,9 +311,6 @@ typedef union pcicfg_semaphore_u {
 #endif
 	} bits;
 } pcicfg_semaphore_t;
-
-
-
 
 typedef union pcicfg_soft_reset_u {
 	uint32_t dw0;
@@ -343,9 +332,6 @@ typedef union pcicfg_soft_reset_u {
 #endif
 	} bits;
 } pcicfg_soft_reset_t;
-
-
-
 
 typedef union pcicfg_online1_u {
 	uint32_t dw0;
@@ -400,8 +386,6 @@ typedef union pcicfg_online1_u {
 	} bits;
 } pcicfg_online1_t;
 
-
-
 typedef union mpu_ep_semaphore_u {
 	uint32_t dw0;
 	struct {
@@ -427,9 +411,6 @@ typedef union mpu_ep_semaphore_u {
 	} bits;
 } mpu_ep_semaphore_t;
 
-
-
-
 typedef union mpu_ep_control_u {
 	uint32_t dw0;
 	struct {
@@ -453,9 +434,6 @@ typedef union mpu_ep_control_u {
 	} bits;
 } mpu_ep_control_t;
 
-
-
-
 /* RX doorbell */
 typedef union pd_rxulp_db_u {
 	uint32_t dw0;
@@ -473,7 +451,6 @@ typedef union pd_rxulp_db_u {
 #endif
 	} bits;
 } pd_rxulp_db_t;
-
 
 /* TX doorbell */
 typedef union pd_txulp_db_u {
@@ -777,7 +754,6 @@ struct oce_async_event_qnq {
 	uint32_t code;
 } ;
 
-
 typedef union oce_mq_ext_ctx_u {
 	uint32_t dw[6];
 	struct {
@@ -860,7 +836,6 @@ typedef union oce_mq_ext_ctx_u {
         } v1;
 
 } oce_mq_ext_ctx_t;
-
 
 /* MQ mailbox structure */
 struct oce_bmbx {
@@ -1554,8 +1529,6 @@ struct mbx_create_common_mq_ex {
 	} params;
 };
 
-
-
 /* [53] OPCODE_COMMON_DESTROY_MQ */
 struct mbx_destroy_common_mq {
 	struct mbx_hdr hdr;
@@ -1710,7 +1683,6 @@ struct mbx_common_query_fw_config {
 			uint32_t port_id;	/* used for stats retrieval */
 			uint32_t function_mode;
 			struct {
-
 				uint32_t ulp_mode;
 				uint32_t nic_wqid_base;
 				uint32_t nic_wq_tot;
@@ -1737,12 +1709,12 @@ struct mbx_common_query_fw_config {
 enum CQFW_CONFIG_NUMBER {
 	FCN_NIC_ISCSI_Initiator = 0x0,
 	FCN_ISCSI_Target = 0x3,
-	FCN_FCoE = 0x7, 
+	FCN_FCoE = 0x7,
 	FCN_ISCSI_Initiator_Target = 0x9,
 	FCN_NIC_RDMA_TOE = 0xA,
 	FCN_NIC_RDMA_FCoE = 0xB,
 	FCN_NIC_RDMA_iSCSI = 0xC,
-	FCN_NIC_iSCSI_FCoE = 0xD 
+	FCN_NIC_iSCSI_FCoE = 0xD
 };
 
 /**
@@ -1805,7 +1777,6 @@ enum CQFW_FUNCTION_MODES_SUPPORTED {
 	FNM_VNIC_DEF_VALID = 0x400000,	/* Set when VNIC_DEF_EN is valid */
 	FNM_VNIC_DEF_EN = 0x800000	/* Set when VNIC Default enabled */
 };
-
 
 struct mbx_common_config_vlan {
 	struct mbx_hdr hdr;
@@ -2098,7 +2069,6 @@ struct mbx_common_get_func_config {
 	} params;
 };
 
-
 /* OPCODE_COMMON_GET_PROFILE_CONFIG */
 
 struct mbx_common_get_profile_config {
@@ -2150,7 +2120,6 @@ struct oce_nic_resc_desc {
 
 };
 
-
 struct flash_file_hdr {
 	uint8_t  sign[52];
 	uint8_t  ufi_version[4];
@@ -2197,7 +2166,6 @@ struct flash_sec_info {
 	struct  flash_section_hdr fsec_hdr;
 	struct  flash_section_entry fsec_entry[32];
 };
-
 
 enum LOWLEVEL_SUBSYSTEM_OPCODES {
 /* Opcodes used for lowlevel functions common to many subystems.
@@ -2779,7 +2747,7 @@ typedef	union oce_wq_ctx_u {
 #if 0
 			uint32_t dw4rsvd1:8;
 #else
-/* PSP: this workaround is not documented: fill 0x01 for ulp_mask */ 
+/* PSP: this workaround is not documented: fill 0x01 for ulp_mask */
 			uint32_t ulp_mask:8;
 #endif
 			uint32_t nic_wq_type:8;
@@ -2896,8 +2864,6 @@ struct mbx_delete_nic_wq {
 	} params;
 };
 
-
-
 struct mbx_create_nic_rq {
 	struct mbx_hdr hdr;
 	union {
@@ -2920,8 +2886,6 @@ struct mbx_create_nic_rq {
 
 	} params;
 };
-
-
 
 /* [10] NIC_DELETE_RQ */
 struct mbx_delete_nic_rq {
@@ -2946,9 +2910,6 @@ struct mbx_delete_nic_rq {
 		} rsp;
 	} params;
 };
-
-
-
 
 struct oce_port_rxf_stats_v0 {
 	uint32_t rx_bytes_lsd;			/* dword 0*/
@@ -3019,7 +2980,6 @@ struct oce_port_rxf_stats_v0 {
 	uint32_t rx_input_fifo_overflow_drop;	/* dword 65*/
 };
 
-
 struct oce_rxf_stats_v0 {
 	struct oce_port_rxf_stats_v0 port[2];
 	uint32_t rx_drops_no_pbuf;		/* dword 132*/
@@ -3089,7 +3049,6 @@ struct oce_port_rxf_stats_v2 {
         uint32_t roce_drops_crc;
         uint32_t rsvd7[19];
 };
-
 
 struct oce_port_rxf_stats_v1 {
 	uint32_t rsvd0[12];
@@ -3167,7 +3126,6 @@ struct oce_erx_stats_v1 {
 	uint32_t rsvd[4];
 };
 
-
 struct oce_erx_stats_v0 {
 	uint32_t rx_drops_no_fragments[44];
 	uint32_t rsvd[4];
@@ -3185,7 +3143,6 @@ struct oce_hw_stats_v2 {
         struct oce_pmem_stats pmem;
         uint32_t rsvd1[18];
 };
-
 
 struct oce_hw_stats_v1 {
 	struct oce_rxf_stats_v1 rxf;
@@ -3213,7 +3170,7 @@ struct oce_hw_stats_v0 {
 			struct oce_hw_stats_v##version stats; 	\
 		} rsp; 						\
 	} params; 						\
-}  
+}
 
 MBX_GET_NIC_STATS(0);
 MBX_GET_NIC_STATS(1);
@@ -3445,7 +3402,6 @@ struct mbx_get_queue_stats {
 	} params;
 };
 
-
 /* [01] NIC_CONFIG_RSS */
 #define OCE_HASH_TBL_SZ	10
 #define OCE_CPU_TBL_SZ	128
@@ -3478,10 +3434,8 @@ struct mbx_config_nic_rss {
 		} rsp;
 	} params;
 };
-	
 
 #pragma pack()
-
 
 typedef uint32_t oce_stat_t;		/* statistic counter */
 
@@ -3656,12 +3610,12 @@ enum OCE_PMEM_ERR_STATS {
  * @brief Statistics for a given Physical Port
  * These satisfy all the required BE2 statistics and also the
  * following MIB objects:
- * 
+ *
  * RFC 2863 - The Interfaces Group MIB
  * RFC 2819 - Remote Network Monitoring Management Information Base (RMON)
  * RFC 3635 - Managed Objects for the Ethernet-like Interface Types
  * RFC 4502 - Remote Network Monitoring Mgmt Information Base Ver-2 (RMON2)
- * 
+ *
  */
 enum OCE_PPORT_STATS {
 	PPORT_TX_PKTS = 0,
@@ -3885,7 +3839,6 @@ struct mbx_nic_set_iface_lro_config {
         } params;
 };
 
-
 struct mbx_create_nic_rq_v2 {
         struct mbx_hdr hdr;
         union {
@@ -4040,7 +3993,7 @@ struct nic_hwlro_singleton_cqe {
         uint32_t rss_bank:1;
         uint32_t qnq:1;
         uint32_t rsvd2:3;
-        
+
 	/* dw 3 */
         uint32_t rss_hash_value;
 #else
@@ -4074,7 +4027,7 @@ struct nic_hwlro_singleton_cqe {
         uint32_t debug:7;
         uint32_t cqe_type:2;
         uint32_t valid:1;
- 
+
        /* dw 3 */
         uint32_t rss_hash_value;
 #endif
@@ -4143,7 +4096,7 @@ struct nic_hwlro_cqe_part2 {
         /* dw 1 */
         uint32_t tcp_window:16;
         uint32_t coalesced_size:16;
-        
+
 	/* dw 2 */
         uint32_t valid:1;
         uint32_t cqe_type:2;
@@ -4161,7 +4114,7 @@ struct nic_hwlro_cqe_part2 {
         uint32_t ipframe:1;
         uint32_t rss_hp:1;
         uint32_t error:1;
-        
+
 	/* dw 3 */
         uint32_t tcp_ack_num;
 #else

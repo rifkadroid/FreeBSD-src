@@ -78,7 +78,6 @@ struct oce_dev_info {
 #define OCE_RDMA_INFO_RDMA_SUPPORTED     0x00000001
 };
 
-
 #define OCE_GEN2_FAMILY     2
 
 #ifdef notdef
@@ -94,8 +93,8 @@ struct oce_mbx_ctx;
 typedef struct oce_rdma_info {
 	int size;
 	void (*close)(void);
-	int (*mbox_post)(struct oce_softc *sc, 
-			 struct oce_mbx *mbx, 
+	int (*mbox_post)(struct oce_softc *sc,
+			 struct oce_mbx *mbx,
 			 struct oce_mbx_ctx *mbxctx);
 	void (*common_req_hdr_init)(struct mbx_hdr *hdr,
 				    uint8_t dom,
