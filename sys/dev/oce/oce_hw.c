@@ -40,6 +40,7 @@
 
 /* $FreeBSD$ */
 
+
 #include "oce_if.h"
 
 static int oce_POST(POCE_SOFTC sc);
@@ -97,7 +98,7 @@ oce_hw_init(POCE_SOFTC sc)
 	rc = oce_POST(sc);
 	if (rc)
 		return rc;
-
+	
 	/* create the bootstrap mailbox */
 	rc = oce_dma_alloc(sc, sizeof(struct oce_bmbx), &sc->bsmbx, 0);
 	if (rc) {
@@ -108,33 +109,36 @@ oce_hw_init(POCE_SOFTC sc)
 	rc = oce_reset_fun(sc);
 	if (rc)
 		goto error;
-
+		
 
 	rc = oce_mbox_init(sc);
 	if (rc)
 		goto error;
 
+
 	rc = oce_get_fw_version(sc);
 	if (rc)
 		goto error;
 
+
 	rc = oce_get_fw_config(sc);
 	if (rc)
 		goto error;
+
 
 	sc->macaddr.size_of_struct = 6;
 	rc = oce_read_mac_addr(sc, 0, 1, MAC_ADDRESS_TYPE_NETWORK,
 					&sc->macaddr);
 	if (rc)
 		goto error;
-
+	
 	if ((IS_BE(sc) && (sc->flags & OCE_FLAGS_BE3)) || IS_SH(sc)) {
 		rc = oce_mbox_check_native_mode(sc);
 		if (rc)
 			goto error;
 	} else
 		sc->be3_native = 0;
-
+	
 	return rc;
 
 error:
@@ -142,6 +146,8 @@ error:
 	device_printf(sc->dev, "Hardware initialisation failed\n");
 	return rc;
 }
+
+
 
 /**
  * @brief		Releases the obtained pci resources
@@ -188,6 +194,9 @@ oce_hw_pci_free(POCE_SOFTC sc)
 	}
 }
 
+
+
+
 /**
  * @brief 		Function to get the PCI capabilities
  * @param sc		software handle to the device
@@ -197,12 +206,16 @@ void oce_get_pci_capabilities(POCE_SOFTC sc)
 {
 	uint32_t val;
 
-	if (pci_find_cap(sc->dev, PCIY_PCIX, &val) == 0) {
-		if (val != 0)
+#if __FreeBSD_version >= 1000000
+	#define pci_find_extcap pci_find_cap
+#endif
+
+	if (pci_find_extcap(sc->dev, PCIY_PCIX, &val) == 0) {
+		if (val != 0) 
 			sc->flags |= OCE_FLAGS_PCIX;
 	}
 
-	if (pci_find_cap(sc->dev, PCIY_EXPRESS, &val) == 0) {
+	if (pci_find_extcap(sc->dev, PCIY_EXPRESS, &val) == 0) {
 		if (val != 0) {
 			uint16_t link_status =
 			    pci_read_config(sc->dev, val + 0x12, 2);
@@ -213,12 +226,12 @@ void oce_get_pci_capabilities(POCE_SOFTC sc)
 		}
 	}
 
-	if (pci_find_cap(sc->dev, PCIY_MSI, &val) == 0) {
+	if (pci_find_extcap(sc->dev, PCIY_MSI, &val) == 0) {
 		if (val != 0)
 			sc->flags |= OCE_FLAGS_MSI_CAPABLE;
 	}
 
-	if (pci_find_cap(sc->dev, PCIY_MSIX, &val) == 0) {
+	if (pci_find_extcap(sc->dev, PCIY_MSIX, &val) == 0) {
 		if (val != 0) {
 			val = pci_msix_count(sc->dev);
 			sc->flags |= OCE_FLAGS_MSIX_CAPABLE;
@@ -249,10 +262,10 @@ oce_hw_pci_alloc(POCE_SOFTC sc)
 		pci_cfg_barnum = OCE_DEV_BE2_CFG_BAR;
 	else
 		pci_cfg_barnum = OCE_DEV_CFG_BAR;
-
+		
 	rr = PCIR_BAR(pci_cfg_barnum);
 
-	if (IS_BE(sc) || IS_SH(sc))
+	if (IS_BE(sc) || IS_SH(sc)) 
 		sc->devcfg_res = bus_alloc_resource_any(sc->dev,
 				SYS_RES_MEMORY, &rr,
 				RF_ACTIVE|RF_SHAREABLE);
@@ -275,7 +288,7 @@ oce_hw_pci_alloc(POCE_SOFTC sc)
 
 	if (intf.bits.sli_valid != OCE_INTF_VALID_SIG)
 		goto error;
-
+	
 	if (intf.bits.sli_rev != OCE_INTF_SLI_REV4) {
 		device_printf(sc->dev, "Adapter doesnt support SLI4\n");
 		goto error;
@@ -301,7 +314,7 @@ oce_hw_pci_alloc(POCE_SOFTC sc)
 		sc->csr_btag = rman_get_bustag(sc->csr_res);
 		sc->csr_bhandle = rman_get_bushandle(sc->csr_res);
 		sc->csr_vhandle = rman_get_virtual(sc->csr_res);
-
+		
 		/* set up DB doorbell region */
 		rr = PCIR_BAR(OCE_PCI_DB_BAR);
 		sc->db_res = bus_alloc_resource_any(sc->dev,
@@ -315,10 +328,11 @@ oce_hw_pci_alloc(POCE_SOFTC sc)
 
 	return 0;
 
-error:
+error:	
 	oce_hw_pci_free(sc);
 	return ENXIO;
 }
+
 
 /**
  * @brief		Function for device shutdown
@@ -352,6 +366,7 @@ oce_hw_shutdown(POCE_SOFTC sc)
 
 	oce_dma_free(sc, &sc->bsmbx);
 }
+
 
 /**
  * @brief		Function for creating nw interface.
@@ -467,9 +482,9 @@ oce_hw_start(POCE_SOFTC sc)
 	int rc = 0;
 
 	rc = oce_get_link_status(sc, &link);
-	if (rc)
+	if (rc) 
 		return 1;
-
+	
 	if (link.logical_link_status == NTWK_LOGICAL_LINK_UP) {
 		sc->link_status = NTWK_LOGICAL_LINK_UP;
 		if_link_state_change(sc->ifp, LINK_STATE_UP);
@@ -482,9 +497,9 @@ oce_hw_start(POCE_SOFTC sc)
 	sc->qos_link_speed = (uint32_t )link.qos_link_speed * 10;
 
 	rc = oce_start_mq(sc->mq);
-
+	
 	/* we need to get MCC aync events. So enable intrs and arm
-	   first EQ, Other EQs will be armed after interface is UP
+	   first EQ, Other EQs will be armed after interface is UP 
 	*/
 	oce_hw_intr_enable(sc);
 	oce_arm_eq(sc, sc->eq[0]->eq_id, 0, TRUE, FALSE);
@@ -496,6 +511,7 @@ oce_hw_start(POCE_SOFTC sc)
 
 	return rc;
 }
+
 
 /**
  * @brief 		Function for hardware enable interupts.
@@ -512,6 +528,7 @@ oce_hw_intr_enable(POCE_SOFTC sc)
 
 }
 
+
 /**
  * @brief 		Function for hardware disable interupts
  * @param sc		software handle to the device
@@ -520,25 +537,13 @@ void
 oce_hw_intr_disable(POCE_SOFTC sc)
 {
 	uint32_t reg;
-
+	
 	reg = OCE_READ_REG32(sc, devcfg, PCICFG_INTR_CTRL);
 	reg &= ~HOSTINTR_MASK;
 	OCE_WRITE_REG32(sc, devcfg, PCICFG_INTR_CTRL, reg);
 }
 
-static u_int
-oce_copy_maddr(void *arg, struct sockaddr_dl *sdl, u_int cnt)
-{
-	struct mbx_set_common_iface_multicast *req = arg;
 
-	if (req->params.req.num_mac == OCE_MAX_MC_FILTER_SIZE)
-		return (0);
-
-	bcopy(LLADDR(sdl), &req->params.req.mac[req->params.req.num_mac++],
-	    ETHER_ADDR_LEN);
-
-	return (1);
-}
 
 /**
  * @brief		Function for hardware update multicast filter
@@ -548,6 +553,7 @@ int
 oce_hw_update_multicast(POCE_SOFTC sc)
 {
 	struct ifnet    *ifp = sc->ifp;
+	struct ifmultiaddr *ifma;
 	struct mbx_set_common_iface_multicast *req = NULL;
 	OCE_DMA_MEM dma;
 	int rc = 0;
@@ -560,17 +566,32 @@ oce_hw_update_multicast(POCE_SOFTC sc)
 	req = OCE_DMAPTR(&dma, struct mbx_set_common_iface_multicast);
 	bzero(req, sizeof(struct mbx_set_common_iface_multicast));
 
-	if_foreach_llmaddr(ifp, oce_copy_maddr, req);
-	if (req->params.req.num_mac == OCE_MAX_MC_FILTER_SIZE) {
-		/*More multicast addresses than our hardware table
-		  So Enable multicast promiscus in our hardware to
-		  accept all multicat packets
-		*/
-		req->params.req.promiscuous = 1;
-	}
+#if __FreeBSD_version > 800000
+	if_maddr_rlock(ifp);
+#endif
+	CK_STAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
+		if (ifma->ifma_addr->sa_family != AF_LINK)
+			continue;
 
+		if (req->params.req.num_mac == OCE_MAX_MC_FILTER_SIZE) {
+			/*More multicast addresses than our hardware table
+			  So Enable multicast promiscus in our hardware to
+			  accept all multicat packets
+			*/
+			req->params.req.promiscuous = 1;
+			break;
+		}
+		bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
+			&req->params.req.mac[req->params.req.num_mac],
+			ETH_ADDR_LEN);
+		req->params.req.num_mac = req->params.req.num_mac + 1;
+	}
+#if __FreeBSD_version > 800000
+	if_maddr_runlock(ifp);
+#endif
 	req->params.req.if_id = sc->if_id;
 	rc = oce_update_multicast(sc, &dma);
 	oce_dma_free(sc, &dma);
 	return rc;
 }
+
