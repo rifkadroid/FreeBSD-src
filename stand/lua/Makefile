@@ -30,7 +30,7 @@ FILES=	cli.lua \
 	screen.lua
 
 # pfSense
-FILES+=	logo-pfSensebw.lua \
+FILES+=	logo-Kontrolbw.lua \
 	brand-pfSense.lua
 
 .include <bsd.prog.mk>

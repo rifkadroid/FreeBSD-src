@@ -69,7 +69,7 @@ main(void)
 	}
 
 	init_dialog(stdin, stdout);
-	dialog_vars.backtitle = __DECONST(char *, "pfSense Installer");
+	dialog_vars.backtitle = __DECONST(char *, "Kontrol Installer");
 	dlg_put_backtitle();
 
 	for (i = 0; i < ndists; i++) {
@@ -92,7 +92,7 @@ main(void)
 	end_dialog();
 
 	free(diststring);
-	for (i = 0; i < ndists; i++) 
+	for (i = 0; i < ndists; i++)
 		free(urls[i]);
 	free(urls);
 
@@ -180,10 +180,10 @@ fetch_files(int nfiles, char **urls)
 
 			current_bytes += chunk;
 			fsize += chunk;
-	
+
 			if (total_bytes > 0) {
 				last_progress = progress;
-				progress = (current_bytes*100)/total_bytes; 
+				progress = (current_bytes*100)/total_bytes;
 			}
 
 			if (ustat.size > 0) {
@@ -200,7 +200,7 @@ fetch_files(int nfiles, char **urls)
 		}
 
 		if (ustat.size > 0 && fsize < ustat.size) {
-			if (fetchLastErrCode == 0) 
+			if (fetchLastErrCode == 0)
 				snprintf(errormsg, sizeof(errormsg),
 				    "Error while fetching %s: %s\n",
 				    urls[i], strerror(errno));
