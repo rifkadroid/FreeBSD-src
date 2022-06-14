@@ -31,6 +31,6 @@ FILES=	cli.lua \
 
 # pfSense
 FILES+=	logo-Kontrolbw.lua \
-	brand-pfSense.lua
+	brand-Kontrol.lua
 
 .include <bsd.prog.mk>

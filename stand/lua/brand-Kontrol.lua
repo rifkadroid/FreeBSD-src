@@ -1,7 +1,7 @@
 --
 -- SPDX-License-Identifier: BSD-2-Clause-FreeBSD
 --
--- Copyright (c) 2019 Rubicon Communications, LLC (Netgate)
+-- Copyright (c) 2016-2022 Konntrol Tecnologia EPP.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -29,18 +29,18 @@
 
 local drawer = require("drawer")
 
-local pfSense_brand = {
-"          __                               ",
-"   _ __  / _|___  ___ _ __  ___  ___       ",
-"  | '_ \\| |_/ __|/ _ \\ '_ \\/ __|/ _ \\      ",
-"  | |_) |  _\\__ \\  __/ | | \\__ \\  __/      ",
-"  | .__/|_| |___/\\___|_| |_|___/\\___|      ",
-"  |_|                                      ",
-"                                           "
+local Kontrol_brand = {
+"                                          ",
+" _  _____  _  _ _  _ _____ ___  ___  _    ",
+"| |/ / _ \\| \\| | \\| |_   _| _ \\/ _ \\| |   ",
+"| ' < (_) | .` | .` | | | |   / (_) | |__ ",
+"|_|\\_\\___/|_|\\_|_|\\_| |_| |_|_\\\\___/|____|",
+"                                          ",
+"                                          ",
 }
 
-drawer.addBrand("pfSense", {
-	graphic = pfSense_brand,
+drawer.addBrand("Kontrol", {
+	graphic = Kontrol_brand,
 	shift = {x = 0, y = 0},
 })
 
