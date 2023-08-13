@@ -3,7 +3,7 @@ include		GENERIC
 nooptions	KDB_TRACE
 options 	DDB
 
-ident		pfSense-DEBUG
+ident		Kontrol-DEBUG
 
 nooptions	MAC		# TrustedBSD MAC Framework
 nooptions	COMPAT_FREEBSD4	# Compatible with FreeBSD4
@@ -198,3 +198,6 @@ device		virtio_console	# VirtIO Console device
 nodevice	aesni
 
 options 	RSS
+
+#Kontrol Arduino
+device  uchcom
