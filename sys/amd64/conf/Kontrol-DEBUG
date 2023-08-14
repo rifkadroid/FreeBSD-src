@@ -196,7 +196,7 @@ device		virtio_console	# VirtIO Console device
 
 # Use AESNI & Blake2
 options aesni
-options blake
+options blake2
 
 options 	RSS
 
