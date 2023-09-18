@@ -1773,7 +1773,7 @@ struct pfioc_states {
 };
 
 struct pfioc_states_v2 {
-	int		ps_len;
+	unsigned int		ps_len;
 	uint64_t	ps_req_version;
 	union {
 		void			*ps_buf;
@@ -2007,6 +2007,7 @@ struct pfioc_iface {
 #define	DIOCGETETHRULESETS	_IOWR('D', 100, struct pfioc_nv)
 #define	DIOCGETETHRULESET	_IOWR('D', 101, struct pfioc_nv)
 #define DIOCSETREASS		_IOWR('D', 102, u_int32_t)
+#define DIOCGETCREATORS		_IOWR('D', 103, struct pfioc_nv)
 
 struct pf_ifspeed_v0 {
 	char			ifname[IFNAMSIZ];
