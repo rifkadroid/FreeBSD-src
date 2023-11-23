@@ -19,12 +19,14 @@ MAN=	arch.7 \
 	hostname.7 \
 	intro.7 \
 	maclabel.7 \
+	mitigations.7 \
 	operator.7 \
 	orders.7 \
 	ports.7 \
 	release.7 \
 	sdoc.7 \
 	security.7 \
+	simd.7 \
 	sizeof.7 \
 	sprog.7 \
 	stats.7 \

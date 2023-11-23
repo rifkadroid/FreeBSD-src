@@ -78,6 +78,8 @@ common_body()
 		"set skip on ${epair_sync}b" \
 		"pass out keep state"
 
+	hostid_one=$(jexec one pfctl -si -v | awk '/Hostid:/ { gsub(/0x/, "", $2); printf($2); }')
+
 	ifconfig ${epair_one}b 198.51.100.254/24 up
 
 	ping -c 1 -S 198.51.100.254 198.51.100.1
@@ -90,12 +92,10 @@ common_body()
 		atf_fail "state not found on synced host"
 	fi
 
-	# Check creator IDs
-	hostid_one=$(jexec one pfctl -si -v | grep Hostid | awk '{ printf($2); }'| sed 's/0x//')
-
-	if ! jexec two pfctl -sc | grep ${hostid_one};
+	if ! jexec two pfctl -sc | grep ""${hostid_one}"";
 	then
-		atf_fail "Didn't find creator one in jail two"
+		jexec two pfctl -sc
+		atf_fail "HostID for host one not found on two"
 	fi
 }
 
@@ -126,6 +126,7 @@ defer_head()
 {
 	atf_set descr 'Defer mode pfsync test'
 	atf_set require.user root
+	atf_set require.progs scapy
 }
 
 defer_body()

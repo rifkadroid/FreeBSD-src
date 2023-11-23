@@ -25,8 +25,6 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_netlink.h"
-
 #include <sys/cdefs.h>
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -441,7 +439,7 @@ rtnl_handle_newneigh(struct nlmsghdr *hdr, struct nlpcb *nlp, struct nl_pstate *
 		if (hdr->nlmsg_flags & NLM_F_REPLACE) {
 			error = EPERM;
 			if ((lle_tmp->la_flags & LLE_IFADDR) == 0) {
-				error = 0;
+				error = 0; /* success */
 				lltable_unlink_entry(llt, lle_tmp);
 				llentry_free(lle_tmp);
 				lle_tmp = NULL;
@@ -461,7 +459,6 @@ rtnl_handle_newneigh(struct nlmsghdr *hdr, struct nlpcb *nlp, struct nl_pstate *
 	if (error != 0) {
 		/* throw away the newly allocated llentry */
 		llentry_free(lle);
-		lle = NULL;
 		return (error);
 	}
 
