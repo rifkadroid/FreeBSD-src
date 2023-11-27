@@ -29,7 +29,7 @@ FILES=	cli.lua \
 	password.lua \
 	screen.lua
 
-# pfSense
+# Kontrol
 FILES+=	logo-Kontrolbw.lua \
 	brand-Kontrol.lua
 
