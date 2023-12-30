@@ -85,6 +85,16 @@ static uint_t zfs_per_txg_dirty_frees_percent = 30;
 static int zfs_dmu_offset_next_sync = 1;
 
 /*
+ * XXXNETGATE
+ *
+ * Hole reporting resulted in quite a few data corruption issues.
+ *
+ * Reporting is purely optional (at cost of wasted space), so err on safety
+ * instead.
+ */
+static int zfs_dmu_report_holes = 0;
+
+/*
  * Limit the amount we can prefetch with one call to this amount.  This
  * helps to limit the amount of memory that can be used by prefetching.
  * Larger objects should be prefetched a bit at a time.
@@ -2171,6 +2181,12 @@ restart:
 
 	rw_enter(&dn->dn_struct_rwlock, RW_READER);
 
+	if (!zfs_dmu_report_holes) {
+		rw_exit(&dn->dn_struct_rwlock);
+		dnode_rele(dn, FTAG);
+		return (SET_ERROR(EBUSY));
+	}
+
 	if (dnode_is_dirty(dn)) {
 		/*
 		 * If the zfs_dmu_offset_next_sync module option is enabled
@@ -2274,6 +2290,21 @@ dmu_read_l0_bps(objset_t *os, uint64_t object, uint64_t offset, uint64_t length,
 			goto out;
 		}
 
+		/*
+		 * If the block was allocated in transaction group that is not
+		 * yet synced, we could clone it, but we couldn't write this
+		 * operation into ZIL, or it may be impossible to replay, since
+		 * the block may appear not yet allocated at that point.
+		 */
+		if (BP_PHYSICAL_BIRTH(bp) > spa_freeze_txg(os->os_spa)) {
+			error = SET_ERROR(EINVAL);
+			goto out;
+		}
+		if (BP_PHYSICAL_BIRTH(bp) > spa_last_synced_txg(os->os_spa)) {
+			error = SET_ERROR(EAGAIN);
+			goto out;
+		}
+
 		bps[i] = *bp;
 	}
 
@@ -2286,7 +2317,7 @@ out:
 
 int
 dmu_brt_clone(objset_t *os, uint64_t object, uint64_t offset, uint64_t length,
-    dmu_tx_t *tx, const blkptr_t *bps, size_t nbps, boolean_t replay)
+    dmu_tx_t *tx, const blkptr_t *bps, size_t nbps)
 {
 	spa_t *spa;
 	dmu_buf_t **dbp, *dbuf;
@@ -2360,10 +2391,8 @@ dmu_brt_clone(objset_t *os, uint64_t object, uint64_t offset, uint64_t length,
 		 * When data in embedded into BP there is no need to create
 		 * BRT entry as there is no data block. Just copy the BP as
 		 * it contains the data.
-		 * Also, when replaying ZIL we don't want to bump references
-		 * in the BRT as it was already done during ZIL claim.
 		 */
-		if (!replay && !BP_IS_HOLE(bp) && !BP_IS_EMBEDDED(bp)) {
+		if (!BP_IS_HOLE(bp) && !BP_IS_EMBEDDED(bp)) {
 			brt_pending_add(spa, bp, tx);
 		}
 	}
@@ -2589,6 +2618,9 @@ ZFS_MODULE_PARAM(zfs, zfs_, per_txg_dirty_frees_percent, UINT, ZMOD_RW,
 
 ZFS_MODULE_PARAM(zfs, zfs_, dmu_offset_next_sync, INT, ZMOD_RW,
 	"Enable forcing txg sync to find holes");
+
+ZFS_MODULE_PARAM(zfs, zfs_, dmu_report_holes, INT, ZMOD_RW,
+	"Report holes to lseek et al");
 
 /* CSTYLED */
 ZFS_MODULE_PARAM(zfs, , dmu_prefetch_max, UINT, ZMOD_RW,
