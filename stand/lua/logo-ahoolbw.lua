@@ -29,19 +29,27 @@
 
 local drawer = require("drawer")
 
-local Kontrol_brand = {
-
-"  _  _____  _   _ _____ ____   ___  _      ",
-" | |/ / _ \\| \\ | |_   _|  _ \\ / _ \\| |     ",
-" | ' / | | |  \\| | | | | |_) | | | | |     ",
-" | . \\ |_| | |\\  | | | |  _ <| |_| | |___  ",
-" |_|\\_\\___/|_| \\_| |_| |_| \\_\\\\___/|_____| ",
-"                                           "
+local ahoolbw = {
+"                               ",
+"  ###     ###                  ",
+"  ###    ###                   ",
+"  ###   ###                    ",
+"  ###  ###                     ",
+"  ### ###        KONTROL       ",
+"  ######        TECNOLOGIA     ",
+"  ######                       ",
+"  ### ###                      ",
+"  ###  ###                     ",
+"  ###   ###                    ",
+"  ###    ###                   ",
+"  ###     ###                  ",
+"  ###      ###                 ",
+"                               "
 }
 
-drawer.addBrand("Kontrol", {
-	graphic = Kontrol_brand,
-	shift = {x = 0, y = 0},
+drawer.addLogo("ahoolbw", {
+	graphic = ahoolbw,
+	shift = {x = 2, y = 4},
 })
 
 return true
