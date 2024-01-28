@@ -29,8 +29,8 @@ FILES=	cli.lua \
 	password.lua \
 	screen.lua
 
-# Kontrol
-FILES+=	logo-Kontrolbw.lua \
-	brand-Kontrol.lua
+# ahool
+FILES+=	logo-ahoolbw.lua \
+	brand-ahool.lua
 
 .include <bsd.prog.mk>
